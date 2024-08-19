@@ -38,6 +38,17 @@ public readonly struct Bounds {
         return MinLongitude < other.MaxLongitude && MaxLongitude > other.MinLongitude && MinLatitude < other.MaxLatitude && MaxLatitude > other.MinLatitude;
     }
 
+    public Bounds Extend(double amount) {
+        double latAmount = (MaxLatitude - MinLatitude) * amount;
+        double lonAmount = (MaxLongitude - MinLongitude) * amount;
+        return new Bounds(
+            MinLatitude - latAmount,
+            MaxLatitude + latAmount,
+            MinLongitude - lonAmount,
+            MaxLongitude + lonAmount
+        );
+    }
+
     public override string ToString()
     {
         return $"Bounds({MinLatitude}, {MaxLatitude}, {MinLongitude}, {MaxLongitude})";

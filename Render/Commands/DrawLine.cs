@@ -4,29 +4,17 @@ using VectSharp;
 namespace OSMRender.Render.Commands;
 
 public class DrawLine : DrawCommand {
-    public DrawLine(IDictionary<string, string> properties, GeoObj obj) : base(properties, obj) {
+    private readonly Line Line;
+    public DrawLine(IDictionary<string, string> properties, Line obj) : base(properties, obj) {
+        Line = obj;
     }
 
     public override void Draw(PageRenderer renderer, int layer) {
         if (layer != FillLayer && layer != StrokeLayer) {
             return;
         }
-
-        IList<Geo.Point> nodes;
-        if (Obj is Line line) {
-            nodes = line.Nodes;
-            if (nodes.Count == 0) {
-                return;
-            }
-        } else if (Obj is Area) {
-            return;
-        } else {
-            throw new NotImplementedException();
-        }
-        var first = nodes[0];
         GraphicsPath path = new();
-        path.MoveTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
-        foreach (var node in nodes) {
+        foreach (var node in Line.Nodes) {
             path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
         }
 

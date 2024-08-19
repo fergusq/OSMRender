@@ -10,6 +10,9 @@ public class Area : GeoObj {
 
     public override Bounds Bounds => OuterEdge.Select(n => n.Bounds).Aggregate((a, b) => a.MergeWith(b));
 
+    public double MeanLatitude => OuterEdge.Select(p => p.Latitude).Sum() / OuterEdge.Count;
+    public double MeanLongitude => OuterEdge.Select(p => p.Longitude).Sum() / OuterEdge.Count;
+
     public Area(long id, TagsCollectionBase tags) : base(id, tags) {
         OuterEdge = new List<Point>();
         InnerEdges = new List<List<Point>>();

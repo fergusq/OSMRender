@@ -59,8 +59,8 @@ public class Ruleset {
                 }
             }
         }
-        foreach (var feature in features) {
-            foreach (var rule in Rules) {
+        foreach (var rule in Rules) {
+            foreach (var feature in features) {
                 if (rule.Matches(doc, feature)) {
                     rule.Apply(doc, feature, new State(this));
                 }

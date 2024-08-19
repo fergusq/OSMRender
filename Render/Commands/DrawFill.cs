@@ -4,25 +4,19 @@ using VectSharp;
 namespace OSMRender.Render.Commands;
 
 public class DrawFill : DrawCommand {
-    public DrawFill(IDictionary<string, string> properties, GeoObj obj) : base(properties, obj) {
+    private readonly Area Area;
+
+    public DrawFill(IDictionary<string, string> properties, Area obj) : base(properties, obj) {
+        Area = obj;
     }
 
     public override void Draw(PageRenderer renderer, int layer) {
         // Areas are all drawn in layer 0
         if (layer == Layer) {
-            IList<Geo.Point> edge;
-            if (Obj is Area area) {
-                edge = area.Edge.ToList();
-            } else if (Obj is Line) {
-                return;
-            } else {
-                throw new NotImplementedException();
-            }
-            var first = edge[0];
-            edge.RemoveAt(0);
+            var first = Area.Edge.First();
             GraphicsPath path = new();
             path.MoveTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
-            foreach (var node in edge) {
+            foreach (var node in Area.Edge.Skip(1)) {
                 path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
             }
             path.LineTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));

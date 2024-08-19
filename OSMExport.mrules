@@ -470,7 +470,6 @@ rules
 			define
 				fill-color : #F0D9D9
 				line-color : #F4A19E
-			draw : line
 		elseif : landuse industrial
 			define
 				fill-color : #DFD1D6

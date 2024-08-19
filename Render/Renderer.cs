@@ -1,4 +1,5 @@
 using OSMRender.Geo;
+using OSMRender.Render.Commands;
 using OsmSharp.API;
 using VectSharp;
 
@@ -49,29 +50,46 @@ public class Renderer {
 
     public Dictionary<(int, int), Page> Render(GeoDocument doc) {
         Console.WriteLine($"Drawing tiles {MinTileX}..{MaxTileX} / {MinTileY}..{MaxTileY}");
-        HashSet<int> layers = new();
+        Dictionary<int, IList<DrawCommand>> layers = new();
         foreach (var cmd in doc.DrawCommands) {
-            cmd.GetLayers().ToList().ForEach(l => layers.Add(l));
+            if (ZoomLevel < cmd.MinZoom || ZoomLevel > cmd.MaxZoom) {
+                continue;
+            }
+            foreach (var layer in cmd.GetLayers()) {
+                if (!layers.ContainsKey(layer)) {
+                    layers[layer] = new List<DrawCommand>();
+                }
+
+                layers[layer].Add(cmd);
+            }
         }
-        var layersSorted = layers.ToList();
+        var layersSorted = layers.Keys.ToList();
         layersSorted.Sort();
         Dictionary<(int, int), Page> pages = new();
+        int total = (MaxTileX - MinTileX + 1) * (MaxTileY - MinTileY + 1);
+        int i = 0;
         for (int x = MinTileX; x <= MaxTileX; x++) {
             for (int y = MinTileY; y <= MaxTileY; y++) {
+                i++;
+                if (i % 100 == 0) {
+                    Console.Write($"\rRendering {100 * i / total}%");
+                }
                 var page = new Page(256, 256);
                 pages[(x, y)] = page;
                 var pageRenderer = new PageRenderer(this, page, x, y);
-                Console.WriteLine($"Drawing tile {x}/{y} ({pageRenderer.TileBounds})...");
+                var bounds = pageRenderer.TileBounds.Extend(1.1);
+                //Console.WriteLine($"Drawing tile {x}/{y} ({pageRenderer.TileBounds})...");
                 foreach (var layer in layersSorted) {
-                    Console.WriteLine($"Drawing layer {layer}...");
-                    foreach (var cmd in doc.DrawCommands.Reverse()) {
-                        if (cmd.Bounds.Overlaps(pageRenderer.TileBounds)) {
+                    //Console.WriteLine($"Drawing layer {layer}...");
+                    foreach (var cmd in layers[layer].Reverse()) {
+                        if (cmd.Bounds.Overlaps(bounds)) {
                             cmd.Draw(pageRenderer, layer);
                         }
                     }
                 }
             }
         }
+        Console.WriteLine("\rRendering 100%");
 
         return pages;
     }
