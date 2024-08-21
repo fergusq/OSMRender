@@ -28,18 +28,41 @@ public class DrawFill : DrawCommand {
     public override void Draw(PageRenderer renderer, int layer) {
         // Areas are all drawn in layer 0
         if (layer == Layer) {
-            var first = Area.Edge.First();
-            GraphicsPath path = new();
-            path.MoveTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
-            foreach (var node in Area.Edge.Skip(1)) {
-                path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
+            List<GraphicsPath> paths = new();
+
+            // Draw outer edges as separate polygons if there are no inner edges
+            if (Area.InnerEdges.Count == 0) {
+                foreach (var outer in Area.OuterEdges) {
+                    var path = new GraphicsPath();
+                    var first = outer.First();
+                    path.MoveTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
+                    foreach (var node in outer.Skip(1)) {
+                        path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
+                    }
+                    path.LineTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
+                    path.Close();
+                    paths.Add(path);
+                }
             }
-            path.LineTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
 
-            renderer.Graphics.FillPath(path, GetColour("fill-color"));
+            // Draw everything together (TODO: this is bad, use intersections)
+            else {
+                var path = new GraphicsPath();
+                var first = Area.Edge.First();
+                path.MoveTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
+                foreach (var node in Area.Edge.Skip(1)) {
+                    path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
+                }
+                path.LineTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
+                paths.Add(path);
+            }
 
-            if (GetString("border-style") != "") {
-                StrokePath(path, renderer, "border");
+            foreach (var path in paths) {
+                renderer.Graphics.FillPath(path, GetColour("fill-color"));
+
+                if (GetString("border-style") != "") {
+                    StrokePath(path, renderer, "border");
+                }
             }
         }
     }

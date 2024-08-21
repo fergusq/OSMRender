@@ -19,24 +19,26 @@ namespace OSMRender.Geo;
 
 public class Area : GeoObj {
 
-    public List<Point> OuterEdge { get; set; }
+    public List<List<Point>> OuterEdges { get; set; }
 
     public List<List<Point>> InnerEdges { get; set; }
 
-    public override Bounds Bounds => OuterEdge.Select(n => n.Bounds).Aggregate((a, b) => a.MergeWith(b));
+    public override Bounds Bounds => OuterEdges.SelectMany(e => e).Select(n => n.Bounds).Aggregate((a, b) => a.MergeWith(b));
 
-    public double MeanLatitude => OuterEdge.Select(p => p.Latitude).Sum() / OuterEdge.Count;
-    public double MeanLongitude => OuterEdge.Select(p => p.Longitude).Sum() / OuterEdge.Count;
+    public double MeanLatitude => OuterEdges.SelectMany(e => e).Select(p => p.Latitude).Sum() / OuterEdges.SelectMany(e => e).Count();
+    public double MeanLongitude => OuterEdges.SelectMany(e => e).Select(p => p.Longitude).Sum() / OuterEdges.SelectMany(e => e).Count();
 
     public Area(long id, TagsCollectionBase tags) : base(id, tags) {
-        OuterEdge = new List<Point>();
-        InnerEdges = new List<List<Point>>();
+        OuterEdges = new();
+        InnerEdges = new();
     }
 
     public IEnumerable<Point> Edge {
         get {
             var edge = new List<Point>();
-            edge.AddRange(OuterEdge);
+            foreach (var outer in OuterEdges) {
+                edge.AddRange(outer);
+            }
             foreach (var inner in InnerEdges) {
                 edge.AddRange(inner);
             }

@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
 
+using System.Globalization;
 using System.Text.RegularExpressions;
 using OSMRender.Geo;
 using OSMRender.Logging;
@@ -226,6 +227,10 @@ public class Parser {
     private Ruleset.IQuery ParseQueryCode(string queryCode) {
         var tokens = TokenizeWithRegex(@"^(""[^""]*""|[\w@:\-]+|[=.,()[\] ])", queryCode).Where(s => s.Trim().Length > 0).ToList();
         var query = ParseQuery(tokens);
+        while (tokens.Count > 0) {
+            var right = ParsePrimitiveQuery(tokens);
+            query = new BoolOpQuery(BoolOpQuery.Op.Or, query, right);
+        }
         return query;
     }
 
@@ -327,6 +332,15 @@ public class Parser {
                 Eat(tokens, "]");
             }
             return new NullQuery();
+        } else if (TryEat(tokens, "gpspoint")) {
+            Ruleset.IQuery? subquery = null;
+            if (TryEat(tokens, "[")) {
+                if (tokens.Count > 0 && tokens[0] != "]") {
+                    subquery = ParseQuery(tokens);
+                }
+                Eat(tokens, "]");
+            }
+            return new NullQuery();
         } else if (TryEat(tokens, "contour")) {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
@@ -401,7 +415,7 @@ public class Parser {
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
-            return obj.Tags is not null && obj.Tags.ContainsKey(Key) && int.Parse(obj.Tags.GetValue(Key)) % Num == 0;
+            return obj.Tags is not null && obj.Tags.ContainsKey(Key) && double.Parse(obj.Tags.GetValue(Key), CultureInfo.InvariantCulture) % Num == 0;
         }
     }
 

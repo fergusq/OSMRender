@@ -65,8 +65,9 @@ public class GeoDocument {
             if (way.Nodes[0] == way.Nodes[^1]) {
                 // Add also as an area
                 var area = new Area(way.Id ?? 0, way.Tags);
-                foreach (var nodeRef in way.Nodes[..^1]) {
-                    area.OuterEdge.Add(points[nodeRef]);
+                area.OuterEdges.Add(new());
+                foreach (var nodeRef in way.Nodes) {
+                    area.OuterEdges[0].Add(points[nodeRef]);
                 }
                 areas[area.Id] = area;
             }
@@ -93,30 +94,15 @@ public class GeoDocument {
                 var area = new Area(relation.Id ?? 0, relation.Tags);
                 foreach (var member in relation.Members) {
                     if (!lines.ContainsKey(member.Id)) {
-                        if (member.Role == "outer") {
-                            // Make a mock area around the bounds
-                            var boundsPoints = new List<Point> {
-                                new(++maxPointId, new TagsCollection(), bounds.MinLatitude, bounds.MinLongitude),
-                                new(++maxPointId, new TagsCollection(), bounds.MaxLatitude, bounds.MinLongitude),
-                                new(++maxPointId, new TagsCollection(), bounds.MaxLatitude, bounds.MaxLongitude),
-                                new(++maxPointId, new TagsCollection(), bounds.MinLatitude, bounds.MaxLongitude)
-                            };
-                            boundsPoints.ForEach(p => points[p.Id] = p);
-
-                            var boundsLine = new Line(member.Id, new TagsCollection());
-                            lines[boundsLine.Id] = boundsLine;
-                            boundsLine.Nodes.AddRange(boundsPoints);
-                        } else {
-                            continue;
-                        }
+                        continue;
                     }
                     if (member.Role == "outer") {
-                        area.OuterEdge.AddRange(lines[member.Id].Nodes);
+                        area.OuterEdges.Add(lines[member.Id].Nodes);
                     } else if (member.Role == "inner") {
                         area.InnerEdges.Add(lines[member.Id].Nodes);
                     }
                 }
-                if (area.OuterEdge.Count > 0) {
+                if (area.OuterEdges.Count > 0) {
                     areas[area.Id] = area;
                 }
             }

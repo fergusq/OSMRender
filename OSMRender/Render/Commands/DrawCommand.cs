@@ -99,8 +99,8 @@ public abstract class DrawCommand {
             lon = point.Longitude;
             return true;
         } else if (Obj is Area area) {
-            lat = area.OuterEdge.Select(p => p.Latitude).Sum() / area.OuterEdge.Count;
-            lon = area.OuterEdge.Select(p => p.Longitude).Sum() / area.OuterEdge.Count;
+            lat = area.OuterEdges.SelectMany(e => e).Select(p => p.Latitude).Sum() / area.OuterEdges.SelectMany(e => e).Count();
+            lon = area.OuterEdges.SelectMany(e => e).Select(p => p.Longitude).Sum() / area.OuterEdges.SelectMany(e => e).Count();
             return true;
         } else if (Obj is Line line && line.Nodes.Count > 0) {
             lat = line.Nodes[line.Nodes.Count / 2].Latitude;
