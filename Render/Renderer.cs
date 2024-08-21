@@ -21,8 +21,10 @@ public class Renderer {
         ZoomLevel = zoomLevel;
 
         MinTileX = (int) Math.Floor(LongitudeToTileNumber(bounds.MinLongitude));
-        MinTileY = (int) Math.Floor(LatitudeToTileNumber(bounds.MaxLatitude));
         MaxTileX = (int) Math.Ceiling(LongitudeToTileNumber(bounds.MaxLongitude));
+
+        // Y axis is flipped
+        MinTileY = (int) Math.Floor(LatitudeToTileNumber(bounds.MaxLatitude));
         MaxTileY = (int) Math.Ceiling(LatitudeToTileNumber(bounds.MinLatitude));
     }
 
@@ -48,9 +50,9 @@ public class Renderer {
         return lat_rad * 180.0 / Math.PI;
     }
 
-    public Dictionary<(int, int), Page> Render(GeoDocument doc) {
+    public Dictionary<(int, int), Page> Render(GeoDocument doc, bool tiled = true) {
         Console.WriteLine($"Drawing tiles {MinTileX}..{MaxTileX} / {MinTileY}..{MaxTileY}");
-        Dictionary<int, IList<DrawCommand>> layers = new();
+        Dictionary<int, List<DrawCommand>> layers = new();
         foreach (var cmd in doc.DrawCommands) {
             if (ZoomLevel < cmd.MinZoom || ZoomLevel > cmd.MaxZoom) {
                 continue;
@@ -63,33 +65,58 @@ public class Renderer {
                 layers[layer].Add(cmd);
             }
         }
+        foreach (var layer in layers) {
+            layer.Value.Sort((a, b) => b.Importance - a.Importance);
+        }
         var layersSorted = layers.Keys.ToList();
         layersSorted.Sort();
         Dictionary<(int, int), Page> pages = new();
-        int total = (MaxTileX - MinTileX + 1) * (MaxTileY - MinTileY + 1);
-        int i = 0;
-        for (int x = MinTileX; x <= MaxTileX; x++) {
-            for (int y = MinTileY; y <= MaxTileY; y++) {
-                i++;
-                if (i % 100 == 0) {
-                    Console.Write($"\rRendering {100 * i / total}%");
-                }
-                var page = new Page(256, 256);
-                pages[(x, y)] = page;
-                var pageRenderer = new PageRenderer(this, page, x, y);
-                var bounds = pageRenderer.TileBounds.Extend(1.1);
-                //Console.WriteLine($"Drawing tile {x}/{y} ({pageRenderer.TileBounds})...");
-                foreach (var layer in layersSorted) {
-                    //Console.WriteLine($"Drawing layer {layer}...");
-                    foreach (var cmd in layers[layer].Reverse()) {
-                        if (cmd.Bounds.Overlaps(bounds)) {
-                            cmd.Draw(pageRenderer, layer);
+        if (tiled) {
+            int total = (MaxTileX - MinTileX + 1) * (MaxTileY - MinTileY + 1);
+            int i = 0;
+            for (int x = MinTileX; x <= MaxTileX; x++) {
+                for (int y = MinTileY; y <= MaxTileY; y++) {
+                    i++;
+                    if (i % 100 == 0) {
+                        Console.Write($"\rRendering {100 * i / total}%");
+                    }
+                    var page = new Page(256, 256);
+                    var pageRenderer = new PageRenderer(this, page, x, y);
+                    var bounds = pageRenderer.TileBounds.Extend(1.1);
+                    //Console.WriteLine($"Drawing tile {x}/{y} ({pageRenderer.TileBounds})...");
+                    bool empty = true;
+                    foreach (var layer in layersSorted) {
+                        //Console.WriteLine($"Drawing layer {layer}...");
+                        foreach (var cmd in layers[layer].AsEnumerable().Reverse()) {
+                            if (cmd.Bounds.Overlaps(bounds)) {
+                                cmd.Draw(pageRenderer, layer);
+                                empty = false;
+                            }
                         }
+                    }
+                    if (!empty) {
+                        pages[(x, y)] = page;
                     }
                 }
             }
+            Console.WriteLine("\rRendering 100%");
+        } else {
+            int tileWidth = MaxTileX - MinTileX + 1;
+            int tileHeight = MaxTileY - MinTileY + 1;
+            var page = new Page(256 * tileWidth, 256 * tileHeight);
+            pages[(MinTileX, MinTileY)] = page;
+            Console.WriteLine($"Generating {page.Width}x{page.Height} page");
+            var pageRenderer = new PageRenderer(this, page, MinTileX, MinTileY);
+            var bounds = pageRenderer.TileBounds.Extend(1.1);
+            Console.WriteLine("Bounds: " + pageRenderer.TileBounds.ToString());
+            foreach (var layer in layersSorted) {
+                foreach (var cmd in layers[layer].AsEnumerable().Reverse()) {
+                    //if (cmd.Bounds.Overlaps(bounds)) {
+                        cmd.Draw(pageRenderer, layer);
+                    //}
+                }
+            }
         }
-        Console.WriteLine("\rRendering 100%");
 
         return pages;
     }

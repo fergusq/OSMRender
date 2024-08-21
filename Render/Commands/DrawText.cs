@@ -4,7 +4,7 @@ using VectSharp;
 namespace OSMRender.Render.Commands;
 
 public class DrawText : DrawCommand {
-    public DrawText(IDictionary<string, string> properties, GeoObj obj) : base(properties, obj) {
+    public DrawText(IDictionary<string, string> properties, int importance, GeoObj obj) : base(properties, importance, obj) {
     }
 
     public override void Draw(PageRenderer renderer, int layer) {
@@ -29,7 +29,8 @@ public class DrawText : DrawCommand {
         //    fontFamily = FontFamily.ResolveFontFamily(family) ?? fontFamily;
         //}
 
-        var font = new Font(fontFamily, GetNum("font-size", renderer.Renderer.ZoomLevel, 0));
+        var fontSize = GetNum("font-size", renderer.Renderer.ZoomLevel, defaultValue: 10);
+        var font = new Font(fontFamily, fontSize);
 
         TextAnchors anchor = TextAnchors.Center;
         if (Properties.TryGetValue("text-align-horizontal", out var align)) {
@@ -56,13 +57,24 @@ public class DrawText : DrawCommand {
                 path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
             }
 
-            renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color"), reference: 0.5, anchor: anchor,
-                        textBaseline: TextBaselines.Middle);
+            if (GetNum("text-halo-width", renderer.Renderer.ZoomLevel, 1f) > 0) {
+                renderer.Graphics.StrokeTextOnPath(path, text, font, GetColour("text-halo-color", Colours.White), reference: 0.5, anchor: anchor, textBaseline: TextBaselines.Middle, lineWidth: 1);
+            }
+            renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color"), reference: 0.5, anchor: anchor, textBaseline: TextBaselines.Middle);
             return;
-        } else TryGetCoordinates(out lat, out lon);
+        } else if (TryGetCoordinates(out lat, out lon)) {
+            double x = renderer.LongitudeToX(lon), y = renderer.LatitudeToY(lat);
 
-        var origin = new VectSharp.Point(renderer.LongitudeToX(lon), renderer.LatitudeToY(lat));
-        renderer.Graphics.FillText(origin, text, font, GetColour("text-color"), TextBaselines.Baseline);
+            y += GetNum("text-offset-vertical", renderer.Renderer.ZoomLevel, fontSize);
+
+            GraphicsPath path = new();
+            path.LineTo(x-1, y);
+            path.LineTo(x+1, y);
+            if (GetNum("text-halo-width", renderer.Renderer.ZoomLevel, 1f) > 0) {
+                renderer.Graphics.StrokeTextOnPath(path, text, font, GetColour("text-halo-color", Colours.White), reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle, lineWidth: 1);
+            }
+            renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color"), reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle);
+        }
     }
 
     public override IEnumerable<int> GetLayers() {

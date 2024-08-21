@@ -7,6 +7,7 @@ namespace OSMRender.Render.Commands;
 public abstract class DrawCommand {
 
     protected IDictionary<string, string> Properties;
+    public int Importance { get; }
     protected GeoObj Obj;
 
     public Bounds Bounds => Obj.Bounds;
@@ -14,9 +15,10 @@ public abstract class DrawCommand {
     public float MinZoom => Properties.ContainsKey("min-zoom") ? float.Parse(Properties["min-zoom"], CultureInfo.InvariantCulture) : 0;
     public float MaxZoom => Properties.ContainsKey("max-zoom") ? float.Parse(Properties["max-zoom"], CultureInfo.InvariantCulture) : 100;
 
-    public DrawCommand(IDictionary<string, string> properties, GeoObj obj) {
+    public DrawCommand(IDictionary<string, string> properties, int importance, GeoObj obj) {
         Properties = new Dictionary<string, string>();
         properties.ToList().ForEach(p => Properties[p.Key] = p.Value);
+        Importance = importance;
         Obj = obj;
     }
 
@@ -51,7 +53,7 @@ public abstract class DrawCommand {
         renderer.Graphics.StrokePath(
             path,
             GetColour($"{prefix}-color"),
-            GetNum($"{prefix}-width", renderer.Renderer.ZoomLevel, baseWidth),
+            prefix == "border" ? baseWidth + 2*GetNum($"border-width", renderer.Renderer.ZoomLevel, baseWidth) : GetNum($"{prefix}-width", renderer.Renderer.ZoomLevel, baseWidth),
             lineDash: dash,
             lineCap: caps,
             lineJoin: joins
@@ -66,11 +68,11 @@ public abstract class DrawCommand {
         }
     }
 
-    protected Colour GetColour(string property) {
+    protected Colour GetColour(string property, Colour? defaultColour = null) {
         if (Properties.ContainsKey(property)) {
-            return Colour.FromCSSString(Properties[property]) ?? Colour.FromRgb(0, 0, 0);
+            return Colour.FromCSSString(Properties[property]) ?? defaultColour ?? Colour.FromRgb(0, 0, 0);
         } else {
-            return Colour.FromRgb(0, 0, 0);
+            return defaultColour ?? Colour.FromRgb(0, 0, 0);
         }
     }
 
@@ -125,28 +127,7 @@ public abstract class DrawCommand {
         }
     }
 
-    protected IEnumerable<(double, double, double)> GetCoordinatesAndAngle(int points) {
-        if (Obj is Geo.Point point) {
-            return new List<(double, double, double)> { (point.Latitude, point.Longitude, 0) };
-        } else if (Obj is Area area) {
-            return new List<(double, double, double)> { (area.MeanLatitude, area.MeanLongitude, 0) };
-        } else if (Obj is Line line && line.Nodes.Count >= 2) {
-            HashSet<(double, double, double)> ans = new();
-            for (int i = 1; i <= points; i++) {
-                double lat = line.Nodes[line.Nodes.Count * i / (points+1)].Latitude;
-                double lon = line.Nodes[line.Nodes.Count * i / (points+1)].Longitude;
-                var a = line.Nodes[line.Nodes.Count * i / (points+1) + 1].Latitude - lat;
-                var b = line.Nodes[line.Nodes.Count * i / (points+1) + 1].Longitude - lon;
-                double angle = Math.Atan2(a, b);
-                ans.Add((lat, lon, angle));
-            }
-            return ans;
-        } else {
-            return new List<(double, double, double)> { (0, 0, 0) };
-        }
-    }
-
-    protected float GetNum(string property, int zoomLevel, float baseVal) {
+    protected float GetNum(string property, int zoomLevel, float baseVal = 0f, float defaultValue = 0f) {
         if (Properties.ContainsKey(property)) {
             var val = Properties[property];
             if (val.Contains(':')) {
@@ -171,7 +152,7 @@ public abstract class DrawCommand {
         if (val.EndsWith("%")) {
             val = val[..^1].Trim();
             float value = float.Parse(val, CultureInfo.InvariantCulture);
-            return (1 + value / 100f) * baseVal;
+            return value / 100f * baseVal;
         } else {
             float value = float.Parse(val, CultureInfo.InvariantCulture);
             return value;

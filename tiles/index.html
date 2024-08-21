@@ -15,7 +15,8 @@ body { margin: 0; }
 
 <script>
 var map = L.map('map').setView([0, 0], 13);
-L.tileLayer('{z}/{x}/{y}.png', {
+L.tileLayer('{z}/{x}/{y}.svg', {
+    minZoom: 11,
     maxZoom: 17,
     attribution: 'OSM Export'
 }).addTo(map);

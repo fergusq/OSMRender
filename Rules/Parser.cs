@@ -575,7 +575,7 @@ public class Parser {
         } else {
             var (key, val) = ParseStatementWithArg();
             if (key == "draw") {
-                return new DrawStatement(val);
+                return new DrawStatement(val, Lines.Count);
             } else if (key == "for") {
                 var query = ParseQueryCode(val);
                 var stmts = ParseStatements();
@@ -694,40 +694,42 @@ public class Parser {
 
     private readonly struct DrawStatement : IStatement {
         private readonly string Type;
+        private readonly int Importance;
 
-        public DrawStatement(string type) {
+        public DrawStatement(string type, int importance) {
             Type = type;
+            Importance = importance;
         }
 
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state) {
-            Console.WriteLine($"Drawing {feature.Name} as {Type} with {string.Join(", ", state.Properties.Select(p => p.Key + "=" + p.Value))}");
+            //Console.WriteLine($"Drawing {feature.Name} as {Type} with {string.Join(", ", state.Properties.Select(p => p.Key + "=" + p.Value))}");
             switch (Type) {
             case "fill":
                 if (feature.Obj is not Area) {
                     Console.WriteLine($"WARNING: draw:fill is only supported for areas, not for {feature.Name}");
                     throw new StopException();
                 }
-                doc.DrawCommands.Add(new DrawFill(state.Properties, (Area) feature.Obj));
+                doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, (Area) feature.Obj));
                 break;
             case "line":
                 if (feature.Obj is not Line) {
                     Console.WriteLine($"WARNING: draw:line is only supported for lines, not for {feature.Name}");
                     throw new StopException();
                 }
-                doc.DrawCommands.Add(new DrawLine(state.Properties, (Line) feature.Obj));
+                doc.DrawCommands.Add(new DrawLine(state.Properties, Importance, (Line) feature.Obj));
                 break;
             case "shape":
-                doc.DrawCommands.Add(new DrawShape(state.Properties, feature.Obj));
+                doc.DrawCommands.Add(new DrawShape(state.Properties, Importance, feature.Obj));
                 break;
             case "text":
-                doc.DrawCommands.Add(new DrawText(state.Properties, feature.Obj));
+                doc.DrawCommands.Add(new DrawText(state.Properties, Importance, feature.Obj));
                 break;
             case "icon":
-                doc.DrawCommands.Add(new DrawIcon(state.Properties, feature.Obj));
+                doc.DrawCommands.Add(new DrawIcon(state.Properties, Importance, feature.Obj));
                 break;
             case "shield":
-                doc.DrawCommands.Add(new DrawText(state.Properties, feature.Obj));
-                doc.DrawCommands.Add(new DrawShape(state.Properties, feature.Obj));
+                doc.DrawCommands.Add(new DrawText(state.Properties, Importance, feature.Obj));
+                doc.DrawCommands.Add(new DrawShape(state.Properties, Importance, feature.Obj));
                 break;
             }
         }
@@ -744,7 +746,7 @@ public class Parser {
         }
 
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state) {
-            Console.WriteLine($"Found target for {feature.Name} {feature.Obj.Id}");
+            //Console.WriteLine($"Found target for {feature.Name} {feature.Obj.Id}");
             foreach (var stmt in Statements) {
                 try {
                     stmt.Apply(doc, feature, state);

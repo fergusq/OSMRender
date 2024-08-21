@@ -143,7 +143,7 @@ public class GeoDocument {
                     var line1 = lines[endNode.LineId];
                     var line2 = lines[matchingLines[0]];
 
-                    Console.WriteLine($"Merging {line2.Id} to {line1.Id}");
+                    //Console.WriteLine($"Merging {line2.Id} to {line1.Id}");
 
                     // Change refs
                     lineToRef.Values.ToList().ForEach(r => {

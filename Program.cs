@@ -4,7 +4,8 @@ using OSMRender.Render;
 using OSMRender.Rules;
 using OsmSharp.API;
 using VectSharp;
-//using VectSharp.SVG;
+using VectSharp.PDF;
+using VectSharp.SVG;
 using VectSharp.Raster;
 
 /*using VectSharp;
@@ -47,28 +48,48 @@ var rules = OSMRender.Rules.Parser.ParseRules(ruleCode);
 
 rules.Apply(doc);
 
-for (int zoomLevel = 11; zoomLevel <= 17; zoomLevel++) {
-    var renderer = new Renderer(
-        osm.Bounds is not null && osm.Bounds.MinLatitude is not null ? OSMRender.Geo.Bounds.FromOsmBounds(osm.Bounds) : doc.Bounds,
-        zoomLevel
-    );
-    var tiles = renderer.Render(doc);
-    var total = tiles.Count;
-    int i = 0;
-    foreach (var pair in tiles) {
-        if (i++%100 == 0) {
-            Console.Write($"\rSaving {100*i/total}%");
+void GenerateTiles() {
+    for (int zoomLevel = 11; zoomLevel <= 17; zoomLevel++) {
+        var renderer = new Renderer(
+            osm.Bounds is not null && osm.Bounds.MinLatitude is not null ? OSMRender.Geo.Bounds.FromOsmBounds(osm.Bounds) : doc.Bounds,
+            zoomLevel
+        );
+        var tiles = renderer.Render(doc);
+        var total = tiles.Count;
+        int i = 0;
+        foreach (var pair in tiles) {
+            if (i++%100 == 0) {
+                Console.Write($"\rSaving {100*i/total}%");
+            }
+            var (x, y) = pair.Key;
+            var tile = pair.Value;
+            var document = new Document();
+            document.Pages.Add(tile);
+            var path = Path.Combine("tiles", $"{zoomLevel}", $"{x}");
+            Directory.CreateDirectory(path);
+            //var fileName = Path.Combine(path, $"{y}.png");
+            //using var stream = new FileStream(fileName, FileMode.Create);
+            //Raster.SaveAsPNG(tile, stream);
+            SVGContextInterpreter.SaveAsSVG(tile, Path.Combine(path, $"{y}.svg"), SVGContextInterpreter.TextOptions.DoNotEmbed, filterOption: new SVGContextInterpreter.FilterOption(SVGContextInterpreter.FilterOption.FilterOperations.NeverRasteriseAndIgnore, 0, false));
         }
-        var (x, y) = pair.Key;
-        var tile = pair.Value;
-        var document = new Document();
-        document.Pages.Add(tile);
-        var path = Path.Combine("tiles", $"{zoomLevel}", $"{x}");
-        Directory.CreateDirectory(path);
-        var fileName = Path.Combine(path, $"{y}.png");
-        using var stream = new FileStream(fileName, FileMode.Create);
-        //SVGContextInterpreter.SaveAsSVG(tile, stream);
-        Raster.SaveAsPNG(tile, stream);
+        Console.WriteLine($"\rSaving 100%");
     }
-    Console.WriteLine($"\rSaving 100%");
 }
+
+void GeneratePDF() {
+    for (int zoomLevel = 11; zoomLevel <= 17; zoomLevel++) {
+        var document = new Document();
+        var renderer = new Renderer(
+            osm.Bounds is not null && osm.Bounds.MinLatitude is not null ? OSMRender.Geo.Bounds.FromOsmBounds(osm.Bounds) : doc.Bounds,
+            zoomLevel
+        );
+        var tiles = renderer.Render(doc, tiled: false);
+        foreach (var pair in tiles) {
+            document.Pages.Add(pair.Value);
+        }
+        document.SaveAsPDF($"export{zoomLevel}.pdf");
+        //SVGContextInterpreter.SaveAsSVG(tiles.Values.First(), $"export{zoomLevel}.svg");
+    }
+}
+
+GenerateTiles();

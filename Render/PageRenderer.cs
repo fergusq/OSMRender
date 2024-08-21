@@ -13,18 +13,23 @@ public class PageRenderer {
     public int TileX { get; set; }
     public int TileY { get; set; }
 
+    public int TileWidth { get; set; }
+    public int TileHeight { get; set; }
+
     public Geo.Bounds TileBounds => Geo.Bounds.From(
-        Renderer.TileNumberToLatitude(TileY + 1),
+        Renderer.TileNumberToLatitude(TileY + TileHeight),
         Renderer.TileNumberToLatitude(TileY),
         Renderer.TileNumberToLongitude(TileX),
-        Renderer.TileNumberToLongitude(TileX + 1)
+        Renderer.TileNumberToLongitude(TileX + TileWidth)
     );
 
-    public PageRenderer(Renderer renderer, Page page, int tileX, int tileY) {
+    public PageRenderer(Renderer renderer, Page page, int tileX, int tileY, int tileWidth = 1, int tileHeight = 1) {
         Renderer = renderer;
         Page = page;
         TileX = tileX;
         TileY = tileY;
+        TileWidth = tileWidth;
+        TileHeight = tileHeight;
     }
 
     public double LongitudeToX(double longitude) {

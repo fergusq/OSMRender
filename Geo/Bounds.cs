@@ -39,8 +39,8 @@ public readonly struct Bounds {
     }
 
     public Bounds Extend(double amount) {
-        double latAmount = (MaxLatitude - MinLatitude) * amount;
-        double lonAmount = (MaxLongitude - MinLongitude) * amount;
+        double latAmount = (MaxLatitude - MinLatitude) * (amount - 1);
+        double lonAmount = (MaxLongitude - MinLongitude) * (amount - 1);
         return new Bounds(
             MinLatitude - latAmount,
             MaxLatitude + latAmount,

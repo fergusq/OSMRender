@@ -6,7 +6,7 @@ namespace OSMRender.Render.Commands;
 public class DrawFill : DrawCommand {
     private readonly Area Area;
 
-    public DrawFill(IDictionary<string, string> properties, Area obj) : base(properties, obj) {
+    public DrawFill(IDictionary<string, string> properties, int importance, Area obj) : base(properties, importance, obj) {
         Area = obj;
     }
 
