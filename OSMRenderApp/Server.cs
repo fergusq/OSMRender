@@ -4,9 +4,10 @@ using System.Text.RegularExpressions;
 using OSMRender.Geo;
 using OSMRender.Logging;
 using OSMRender.Render;
-using System;
 using VectSharp.SVG;
 using VectSharp.Raster;
+using System.Globalization;
+using System.Diagnostics;
 
 namespace OSMRenderApp;
 
@@ -15,6 +16,7 @@ public partial class Server {
     private readonly GeoDocument Document;
     private readonly Bounds Bounds;
     private readonly Logger Logger;
+    private readonly string IndexPage;
     private static readonly Regex TILE_URL_PATTERN = TileUrlPattern();
     private const string PAGE = """
 <!doctype html>
@@ -33,8 +35,8 @@ body { margin: 0; }
 <div id="map"></div>
 
 <script>
-var map = L.map('map').setView([0, 0], 13);
-L.tileLayer('{z}/{x}/{y}.png', {
+var map = L.map('map').setView([<LAT>, <LON>], 13);
+L.tileLayer('{z}/{x}/{y}.<FILETYPE>', {
     minZoom: 11,
     maxZoom: 18,
     attribution: 'OSM Export'
@@ -42,10 +44,19 @@ L.tileLayer('{z}/{x}/{y}.png', {
 </script>
 """;
 
-    public Server(GeoDocument doc, Bounds bounds, Logger logger) {
+    public enum TileType {
+        Png,
+        Svg,
+    }
+
+    public Server(GeoDocument doc, Bounds bounds, TileType type, Logger logger) {
         Document = doc;
         Bounds = bounds;
         Logger = logger;
+        IndexPage = PAGE
+            .Replace("<LAT>", ((bounds.MinLatitude + bounds.MaxLatitude) / 2).ToString(CultureInfo.InvariantCulture))
+            .Replace("<LON>", ((bounds.MinLongitude + bounds.MaxLongitude) / 2).ToString(CultureInfo.InvariantCulture))
+            .Replace("<FILETYPE>", type switch { TileType.Png => "png", TileType.Svg => "svg", _ => throw new NotImplementedException() });
     }
 
     public void StartServer(string url) {
@@ -62,53 +73,57 @@ L.tileLayer('{z}/{x}/{y}.png', {
             throw new NullReferenceException();
         }
         while (true) {
-            var ctx = await Listener.GetContextAsync();
-            var req = ctx.Request;
-            var resp = ctx.Response;
-            if (req.Url == null) continue;
-            if (req.HttpMethod == "GET" && req.Url.AbsolutePath == "/") {
-                byte[] data = Encoding.UTF8.GetBytes(PAGE);
-                resp.ContentType = "text/html; charset=utf8";
-                resp.ContentEncoding = Encoding.UTF8;
-                resp.ContentLength64 = data.LongLength;
-                await resp.OutputStream.WriteAsync(data);
-                resp.Close();
-                continue;
-            }
-            var match = TILE_URL_PATTERN.Match(req.Url.AbsolutePath);
-            if (req.HttpMethod == "GET" && match.Success) {
-                int zoom = int.Parse(match.Groups[1].Value);
-                int x = int.Parse(match.Groups[2].Value);
-                int y = int.Parse(match.Groups[3].Value);
-                string type = match.Groups[4].Value;
-
-                var renderer = new Renderer(Bounds, zoom, Logger);
-                var page = renderer.RenderTile(Document, x, y);
-
-                byte[] data;
-                if (type == "svg") {
-                    var xml = SVGContextInterpreter.SaveAsSVG(page);
-                    data = Encoding.UTF8.GetBytes(xml.OuterXml);
-                    resp.ContentType = "image/svg+xml; charset=utf8";
+            try {
+                var ctx = await Listener.GetContextAsync();
+                var req = ctx.Request;
+                var resp = ctx.Response;
+                if (req.Url == null) continue;
+                if (req.HttpMethod == "GET" && req.Url.AbsolutePath == "/") {
+                    byte[] data = Encoding.UTF8.GetBytes(IndexPage);
+                    resp.ContentType = "text/html; charset=utf8";
                     resp.ContentEncoding = Encoding.UTF8;
-                } else if (type == "png") {
-                    using (MemoryStream stream = new()) {
-                        Raster.SaveAsPNG(page, stream);
-                        data = stream.ToArray();
-                    }
-                    resp.ContentType = "image/png; charset=binary";
-                    resp.ContentEncoding = Encoding.UTF8;
-                } else {
-                    await Error(resp, 400);
+                    resp.ContentLength64 = data.LongLength;
+                    await resp.OutputStream.WriteAsync(data);
+                    resp.Close();
                     continue;
                 }
+                var match = TILE_URL_PATTERN.Match(req.Url.AbsolutePath);
+                if (req.HttpMethod == "GET" && match.Success) {
+                    int zoom = int.Parse(match.Groups[1].Value);
+                    int x = int.Parse(match.Groups[2].Value);
+                    int y = int.Parse(match.Groups[3].Value);
+                    string type = match.Groups[4].Value;
 
-                resp.ContentLength64 = data.LongLength;
-                await resp.OutputStream.WriteAsync(data);
-                resp.Close();
-            } else {
-                resp.StatusCode = 404;
-                resp.Close();
+                    var renderer = new Renderer(Bounds, zoom, Logger);
+                    var page = renderer.RenderTile(Document, x, y);
+
+                    byte[] data;
+                    if (type == "svg") {
+                        var xml = SVGContextInterpreter.SaveAsSVG(page);
+                        data = Encoding.UTF8.GetBytes(xml.OuterXml);
+                        resp.ContentType = "image/svg+xml; charset=utf8";
+                        resp.ContentEncoding = Encoding.UTF8;
+                    } else if (type == "png") {
+                        using (MemoryStream stream = new()) {
+                            Raster.SaveAsPNG(page, stream);
+                            data = stream.ToArray();
+                        }
+                        resp.ContentType = "image/png; charset=binary";
+                        resp.ContentEncoding = Encoding.UTF8;
+                    } else {
+                        await Error(resp, 400);
+                        continue;
+                    }
+
+                    resp.ContentLength64 = data.LongLength;
+                    await resp.OutputStream.WriteAsync(data);
+                    resp.Close();
+                } else {
+                    await Error(resp, 404);
+                    resp.Close();
+                }
+            } catch (HttpListenerException e) {
+                Debug.WriteLine(e.ToString());
             }
         }
     }

@@ -17,13 +17,13 @@ var server = false;
 var port = "8000";
 
 var options = new OptionSet { 
-    { "t|type=", "output type (pdf, png, svg, pngtiles, svgtiles) (default: pdf)", t => outputType = t },
+    { "t|type=", "output type (pdf, png, svg, pngtiles, svgtiles) (default: pdf); when in server mode: decides the tile image file type (pngtiles, svgtiles) (default: pngtiles)", t => outputType = t },
     { "r|ruleset=", "ruleset file", r => rulesetPath = r },
     { "i|input=", ".osm input file", i => inputPath = i },
     { "o|output=", "output file", o => outputPath = o },
     { "m|min-zoom=", "min zoom level to create (default: 11)", (int z) => minZoom = z },
     { "M|max-zoom=", "max zoom level to create (default: 18)", (int z) => maxZoom = z },
-    { "server", "instead of generating output, start a tile server (-t, -o, -m, -M are ignored)", s => server = s != null },
+    { "server", "instead of generating output, start a tile server (-o, -m, -M are ignored)", s => server = s != null },
     { "P|port=", "tile server port (default: 8000)", p => port = p },
     { "L|log=", "log file path", l => logPath = l },
     { "v", "increase debug message verbosity", v => { if (v != null) ++verbosity; } },
@@ -62,7 +62,7 @@ var (doc, bounds) = reader.ReadOSM(inputPath);
 rules.Apply(doc);
 
 if (server) {
-    var httpServer = new Server(doc, bounds, logger);
+    var httpServer = new Server(doc, bounds, outputType == "svgtiles" ? Server.TileType.Svg : Server.TileType.Png, logger);
     httpServer.StartServer($"http://localhost:{port}/");
 } else {
     Generator generator = new(logger);
