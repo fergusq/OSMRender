@@ -1,12 +1,12 @@
 ﻿using System.Xml.Serialization;
 using OSMRender.Geo;
 using OSMRender.Render;
-using OSMRender.Rules;
 using OsmSharp.API;
 using VectSharp;
 using VectSharp.PDF;
 using VectSharp.SVG;
 using VectSharp.Raster;
+using OSMRender.Logging;
 
 /*using VectSharp;
 using VectSharp.PDF;
@@ -38,18 +38,23 @@ using (var stream = new FileStream("export.osm", FileMode.Open)) {
     doc = GeoDocument.FromOSM(osm);
 }
 
-Console.WriteLine($"Found {doc.Points.Count} points");
-Console.WriteLine($"Found {doc.Lines.Count} lines");
-Console.WriteLine($"Found {doc.Areas.Count} areas");
-Console.WriteLine($"Found {doc.Relations.Count} relations");
+using var logger = new FileLogger("OSMRender.log");
+logger.Level = FileLogger.LoggingLevel.Debug;
+
+logger.Debug($"Found {doc.Points.Count} points");
+logger.Debug($"Found {doc.Lines.Count} lines");
+logger.Debug($"Found {doc.Areas.Count} areas");
+logger.Debug($"Found {doc.Relations.Count} relations");
+
 
 var ruleCode = File.ReadAllText("OSMExport.mrules");
-var rules = OSMRender.Rules.Parser.ParseRules(ruleCode);
+var rules = OSMRender.Rules.Parser.ParseRules(ruleCode, logger);
 
 rules.Apply(doc);
 
 void GenerateTiles() {
     for (int zoomLevel = 11; zoomLevel <= 17; zoomLevel++) {
+        Console.WriteLine($"Rendering zoom level {zoomLevel}");
         var renderer = new Renderer(
             osm.Bounds is not null && osm.Bounds.MinLatitude is not null ? OSMRender.Geo.Bounds.FromOsmBounds(osm.Bounds) : doc.Bounds,
             zoomLevel
@@ -77,8 +82,9 @@ void GenerateTiles() {
 }
 
 void GeneratePDF() {
-    for (int zoomLevel = 11; zoomLevel <= 17; zoomLevel++) {
-        var document = new Document();
+    var document = new Document();
+    for (int zoomLevel = 11; zoomLevel <= 18; zoomLevel++) {
+        Console.WriteLine($"Rendering zoom level {zoomLevel}");
         var renderer = new Renderer(
             osm.Bounds is not null && osm.Bounds.MinLatitude is not null ? OSMRender.Geo.Bounds.FromOsmBounds(osm.Bounds) : doc.Bounds,
             zoomLevel
@@ -87,9 +93,9 @@ void GeneratePDF() {
         foreach (var pair in tiles) {
             document.Pages.Add(pair.Value);
         }
-        document.SaveAsPDF($"export{zoomLevel}.pdf");
         //SVGContextInterpreter.SaveAsSVG(tiles.Values.First(), $"export{zoomLevel}.svg");
     }
+    document.SaveAsPDF($"export.pdf");
 }
 
-GenerateTiles();
+GeneratePDF();

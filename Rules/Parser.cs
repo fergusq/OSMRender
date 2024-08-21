@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using OSMRender.Geo;
+using OSMRender.Logging;
 using OSMRender.Render.Commands;
 
 namespace OSMRender.Rules;
@@ -74,20 +75,22 @@ public class Parser {
         return outLines;
     }
 
-    public static Ruleset ParseRules(string ruleString) {
+    public static Ruleset ParseRules(string ruleString, ILogger? logger = null) {
         var lines = ParseLines(ruleString);
         var rules = new Ruleset();
-        var parser = new Parser(lines, rules);
+        var parser = new Parser(lines, rules, logger ?? new DummyLogger());
         parser.Parse();
         return rules;
     }
 
     private readonly List<string> Lines;
     private readonly Ruleset Rules;
+    private readonly ILogger Logger;
 
-    private Parser(List<string> lines, Ruleset rules) {
+    private Parser(List<string> lines, Ruleset rules, ILogger logger) {
         Lines = lines;
         Rules = rules;
+        Logger = logger;
     }
 
     private bool TryEatLine(params string[] token) {
@@ -529,7 +532,7 @@ public class Parser {
         var cond = ParseStatementWithArg("target");
         ICondition condition = ParseCondition(cond);
         var stmts = ParseStatements();
-        return new Rule(condition, stmts);
+        return new Rule(condition, stmts, Logger);
     }
 
     private static ICondition ParseCondition(string cond) {
@@ -575,7 +578,7 @@ public class Parser {
         } else {
             var (key, val) = ParseStatementWithArg();
             if (key == "draw") {
-                return new DrawStatement(val, Lines.Count);
+                return new DrawStatement(val, Lines.Count, Logger);
             } else if (key == "for") {
                 var query = ParseQueryCode(val);
                 var stmts = ParseStatements();
@@ -695,25 +698,27 @@ public class Parser {
     private readonly struct DrawStatement : IStatement {
         private readonly string Type;
         private readonly int Importance;
+        private readonly ILogger Logger;
 
-        public DrawStatement(string type, int importance) {
+        public DrawStatement(string type, int importance, ILogger logger) {
             Type = type;
             Importance = importance;
+            Logger = logger;
         }
 
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state) {
-            //Console.WriteLine($"Drawing {feature.Name} as {Type} with {string.Join(", ", state.Properties.Select(p => p.Key + "=" + p.Value))}");
+            Logger.Debug($"Drawing {feature.Name} {feature.Obj.Id} as {Type} with {string.Join(", ", state.Properties.Select(p => p.Key + "=" + p.Value))}");
             switch (Type) {
             case "fill":
                 if (feature.Obj is not Area) {
-                    Console.WriteLine($"WARNING: draw:fill is only supported for areas, not for {feature.Name}");
+                    Logger.Warning($"draw:fill is only supported for areas, not for {feature.Name}");
                     throw new StopException();
                 }
                 doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, (Area) feature.Obj));
                 break;
             case "line":
                 if (feature.Obj is not Line) {
-                    Console.WriteLine($"WARNING: draw:line is only supported for lines, not for {feature.Name}");
+                    Logger.Warning($"draw:line is only supported for lines, not for {feature.Name}");
                     throw new StopException();
                 }
                 doc.DrawCommands.Add(new DrawLine(state.Properties, Importance, (Line) feature.Obj));
@@ -739,14 +744,16 @@ public class Parser {
     {
         private readonly ICondition Condition;
         private readonly IEnumerable<IStatement> Statements;
+        private readonly ILogger Logger;
 
-        public Rule(ICondition cond, IEnumerable<IStatement> statements) {
+        public Rule(ICondition cond, IEnumerable<IStatement> statements, ILogger logger) {
             Condition = cond;
             Statements = statements;
+            Logger = logger;
         }
 
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state) {
-            //Console.WriteLine($"Found target for {feature.Name} {feature.Obj.Id}");
+            Logger.Debug($"Found target for {feature.Name} {feature.Obj.Id} {feature.Obj.Tags.GetValue("name")}");
             foreach (var stmt in Statements) {
                 try {
                     stmt.Apply(doc, feature, state);
