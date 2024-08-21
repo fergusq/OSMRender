@@ -180,30 +180,36 @@ public class GeoDocument {
     }
 
     internal void CombineAdjacentLineDraws() {
-        Dictionary<long, DrawText> lineToDraw = new();
+        foreach (var feature in DrawCommands.Select(c => c.Feature).ToHashSet()) {
+            CombineAdjacentLineDrawsFor(feature);
+        }
+    }
+
+    internal void CombineAdjacentLineDrawsFor(string feature) {
+        Dictionary<long, LineDrawCommand> lineToDraw = new();
         DrawCommands
-            .Where(c => c is DrawText d && d.Points.Count > 0)
-            .Select(c => (DrawText) c)
+            .Where(c => c.Feature == feature && c is LineDrawCommand d && d.Points.Count > 0)
+            .Select(c => (LineDrawCommand) c)
             .ToList()
             .ForEach(p => lineToDraw[p.Obj.Id] = p);
         Dictionary<long, HashSet<long>> nodeToLine = new();
         Dictionary<long, HashSet<long>> endNodeToLine = new();
-        foreach(var drawText in lineToDraw.Values) {
-            if (drawText.Points.Count >= 2) {
-                foreach (var node in drawText.Points) {
+        foreach(var drawCmd in lineToDraw.Values) {
+            if (drawCmd.Points.Count >= 2) {
+                foreach (var node in drawCmd.Points) {
                     if (!nodeToLine.ContainsKey(node.Id)) {
                         nodeToLine[node.Id] = new();
                     }
-                    nodeToLine[node.Id].Add(drawText.Obj.Id);
+                    nodeToLine[node.Id].Add(drawCmd.Obj.Id);
                 }
 
-                var startId = drawText.Points[0].Id;
-                var endId = drawText.Points[^1].Id;
+                var startId = drawCmd.Points[0].Id;
+                var endId = drawCmd.Points[^1].Id;
                 foreach (var node in new long[] { startId, endId }) {
                     if (!endNodeToLine.ContainsKey(node)) {
                         endNodeToLine[node] = new();
                     }
-                    endNodeToLine[node].Add(drawText.Obj.Id);
+                    endNodeToLine[node].Add(drawCmd.Obj.Id);
                 }
             }
         }
@@ -238,7 +244,7 @@ public class GeoDocument {
                     var line1 = lineToDraw[endNode.LineId];
                     var line2 = lineToDraw[matchingLines[0]];
 
-                    //Console.WriteLine($"Merging {line2.Id} to {line1.Id}");
+                    Console.WriteLine($"Merging {line2.Obj.Id} {line2.Feature} to {line1.Obj.Id} {line1.Feature}");
 
                     // Change refs
                     lineToRef.Values.ToList().ForEach(r => {

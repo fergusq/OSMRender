@@ -5,7 +5,7 @@ namespace OSMRender.Render.Commands;
 
 public class DrawLine : DrawCommand {
     private readonly Line Line;
-    public DrawLine(IDictionary<string, string> properties, int importance, Line obj) : base(properties, importance, obj) {
+    public DrawLine(IDictionary<string, string> properties, int importance, string feature, Line obj) : base(properties, importance, feature, obj) {
         Line = obj;
     }
 

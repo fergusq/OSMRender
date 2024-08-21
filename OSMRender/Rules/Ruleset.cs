@@ -1,4 +1,6 @@
 using OSMRender.Geo;
+using OSMRender.Render.Commands;
+using OsmSharp.Tags;
 
 namespace OSMRender.Rules;
 
@@ -67,5 +69,6 @@ public class Ruleset {
             }
         }
         doc.CombineAdjacentLineDraws();
+        doc.DrawCommands.Add(new DrawBackground(new State(this).Properties, 0, "background", new Background(-1, new TagsCollection(), doc.Bounds)));
     }
 }

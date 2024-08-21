@@ -8,6 +8,7 @@ public abstract class DrawCommand {
 
     public IDictionary<string, string> Properties { get; }
     public int Importance { get; }
+    public string Feature { get; }
     public GeoObj Obj { get; }
 
     public Bounds Bounds => Obj.Bounds;
@@ -15,10 +16,11 @@ public abstract class DrawCommand {
     public float MinZoom => Properties.ContainsKey("min-zoom") ? float.Parse(Properties["min-zoom"], CultureInfo.InvariantCulture) : 0;
     public float MaxZoom => Properties.ContainsKey("max-zoom") ? float.Parse(Properties["max-zoom"], CultureInfo.InvariantCulture) : 100;
 
-    public DrawCommand(IDictionary<string, string> properties, int importance, GeoObj obj) {
+    public DrawCommand(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) {
         Properties = new Dictionary<string, string>();
         properties.ToList().ForEach(p => Properties[p.Key] = p.Value);
         Importance = importance;
+        Feature = feature;
         Obj = obj;
     }
 

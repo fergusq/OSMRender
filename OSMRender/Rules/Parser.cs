@@ -714,27 +714,27 @@ public class Parser {
                     Logger.Warning($"draw:fill is only supported for areas, not for {feature.Name}");
                     throw new StopException();
                 }
-                doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, (Area) feature.Obj));
+                doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, feature.Name, (Area) feature.Obj));
                 break;
             case "line":
                 if (feature.Obj is not Line) {
                     Logger.Warning($"draw:line is only supported for lines, not for {feature.Name}");
                     throw new StopException();
                 }
-                doc.DrawCommands.Add(new DrawLine(state.Properties, Importance, (Line) feature.Obj));
+                doc.DrawCommands.Add(new DrawLine(state.Properties, Importance, feature.Name, (Line) feature.Obj));
                 break;
             case "shape":
-                doc.DrawCommands.Add(new DrawShape(state.Properties, Importance, feature.Obj));
+                doc.DrawCommands.Add(new DrawShape(state.Properties, Importance, feature.Name, feature.Obj));
                 break;
             case "text":
-                doc.DrawCommands.Add(new DrawText(state.Properties, Importance, feature.Obj));
+                doc.DrawCommands.Add(new DrawText(state.Properties, Importance, feature.Name, feature.Obj));
                 break;
             case "icon":
-                doc.DrawCommands.Add(new DrawIcon(state.Properties, Importance, feature.Obj));
+                doc.DrawCommands.Add(new DrawIcon(state.Properties, Importance, feature.Name, feature.Obj));
                 break;
             case "shield":
-                doc.DrawCommands.Add(new DrawText(state.Properties, Importance, feature.Obj));
-                doc.DrawCommands.Add(new DrawShape(state.Properties, Importance, feature.Obj));
+                doc.DrawCommands.Add(new DrawText(state.Properties, Importance, feature.Name, feature.Obj));
+                doc.DrawCommands.Add(new DrawShape(state.Properties, Importance, feature.Name, feature.Obj));
                 break;
             }
         }

@@ -4,11 +4,11 @@ using VectSharp;
 
 namespace OSMRender.Render.Commands;
 
-public class DrawShape : DrawCommand {
+public class DrawShape : LineDrawCommand {
 
     private readonly static double LINE_SHAPE_INTERVAL = 100;
 
-    public DrawShape(IDictionary<string, string> properties, int importance, GeoObj obj) : base(properties, importance, obj) {
+    public DrawShape(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : base(properties, importance, feature, obj) {
     }
 
     public override void Draw(PageRenderer renderer, int layer) {
@@ -16,7 +16,7 @@ public class DrawShape : DrawCommand {
 
         List<GraphicsPath> paths = new();
         Colour fillColour = GetColour("fill-color");
-        Colour pathColour = GetColour("border-color", fillColour);
+        Colour pathColour = GetColour("border-color", GetColour("line-color", fillColour));
         double pathWidth = 1.0;
         GraphicsPath path = new();
         var shape = GetString("shape");
@@ -75,6 +75,11 @@ public class DrawShape : DrawCommand {
             paths.Add(path);
             renderer.Graphics.FillPath(path, fillColour);
             renderer.Graphics.StrokePath(path, pathColour, pathWidth);
+        } else if (shape == "circle") {
+            path.Arc(0, 0, 1, 0, 2*Math.PI);
+            paths.Add(path);
+            renderer.Graphics.FillPath(path, fillColour);
+            renderer.Graphics.StrokePath(path, pathColour, pathWidth);
         } else {
             renderer.Logger.Error($"Unknown shape `{shape}'");
             return;
@@ -86,9 +91,9 @@ public class DrawShape : DrawCommand {
             angleOffset = GetNum("angle", renderer.Renderer.ZoomLevel) / 180 * Math.PI;
         }
 
-        if (Obj is Line line) {
+        if (Obj is Line) {
             var linePath = new GraphicsPath();
-            foreach (var node in line.Nodes) {
+            foreach (var node in Points) {
                 linePath.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
             }
 

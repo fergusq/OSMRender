@@ -1,6 +1,6 @@
 using OSMRender.Geo;
 using VectSharp;
-using VectSharp.MuPDFUtils;
+using BigGustave;
 
 namespace OSMRender.Render.Commands;
 
@@ -9,7 +9,7 @@ public class DrawIcon : DrawCommand {
     private static Dictionary<string, RasterImage> ImageCache = new();
     public static string SearchPath { get; set; } = "";
     
-    public DrawIcon(IDictionary<string, string> properties, int importance, GeoObj obj) : base(properties, importance, obj) {
+    public DrawIcon(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : base(properties, importance, feature, obj) {
     }
 
     public override void Draw(PageRenderer renderer, int layer) {
@@ -42,7 +42,21 @@ public class DrawIcon : DrawCommand {
             }
         }
 
-        var newImage = new RasterImageFile(path);
+        using var stream = File.OpenRead(path);
+        Png png = Png.Open(stream);
+        
+        byte[] data = new byte[png.Width * png.Height * 4];
+        for (int x = 0; x < png.Width; x++) {
+            for (int y = 0; y < png.Height; y++) {
+                var pixel = png.GetPixel(x, y);
+                data[4*y*png.Width + 4*x] = pixel.R;
+                data[4*y*png.Width + 4*x + 1] = pixel.G;
+                data[4*y*png.Width + 4*x + 2] = pixel.B;
+                data[4*y*png.Width + 4*x + 3] = pixel.A;
+            }
+        }
+
+        var newImage = new RasterImage(data, png.Width, png.Height, PixelFormats.RGBA, true);
         ImageCache[path] = newImage;
         return newImage;
     }
