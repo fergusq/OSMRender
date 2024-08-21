@@ -1,5 +1,21 @@
+// This file is part of OSMRender.
+//
+// OSMRender is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// OSMRender is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
+
 using OSMRender.Render.Commands;
 using OsmSharp.API;
+using OsmSharp.Tags;
 
 namespace OSMRender.Geo;
 
@@ -27,10 +43,18 @@ public class GeoDocument {
         Dictionary<long, Line> lines = new();
         Dictionary<long, Relation> relations = new();
 
+        long maxPointId = 0;
         foreach (var node in source.Nodes) {
             if (node is null) continue;
             points[node.Id ?? 0] = new Point(node.Id ?? 0, node.Tags, node.Latitude ?? 0, node.Longitude ?? 0);
+            if ((node.Id ?? 0) > maxPointId) {
+                maxPointId = node.Id ?? 0;
+            }
         }
+
+        var bounds = points.Select(p => p.Value.Bounds).Aggregate((a, b) => a.MergeWith(b));
+
+        long maxWayId = 0;
         foreach (var way in source.Ways) {
             if (way is null) continue;
             lines[way.Id ?? 0] = new Line(way.Id ?? 0, way.Tags);
@@ -46,7 +70,12 @@ public class GeoDocument {
                 }
                 areas[area.Id] = area;
             }
+
+            if ((way.Id ?? 0) > maxWayId) {
+                maxWayId = way.Id ?? 0;
+            }
         }
+
         foreach (var relation in source.Relations) {
             if (relation is null) continue;
             relations[relation.Id ?? 0] = new Relation(relation.Id ?? 0, relation.Tags);
@@ -60,15 +89,30 @@ public class GeoDocument {
             }*/
 
             // Add also as an area
-            if (relation.Tags.Contains(new OsmSharp.Tags.Tag("type", "multipolygon"))) {
+            if (relation.Tags.Contains(new Tag("type", "multipolygon"))) {
                 var area = new Area(relation.Id ?? 0, relation.Tags);
                 foreach (var member in relation.Members) {
                     if (!lines.ContainsKey(member.Id)) {
-                        continue;
+                        if (member.Role == "outer") {
+                            // Make a mock area around the bounds
+                            var boundsPoints = new List<Point> {
+                                new(++maxPointId, new TagsCollection(), bounds.MinLatitude, bounds.MinLongitude),
+                                new(++maxPointId, new TagsCollection(), bounds.MaxLatitude, bounds.MinLongitude),
+                                new(++maxPointId, new TagsCollection(), bounds.MaxLatitude, bounds.MaxLongitude),
+                                new(++maxPointId, new TagsCollection(), bounds.MinLatitude, bounds.MaxLongitude)
+                            };
+                            boundsPoints.ForEach(p => points[p.Id] = p);
+
+                            var boundsLine = new Line(member.Id, new TagsCollection());
+                            lines[boundsLine.Id] = boundsLine;
+                            boundsLine.Nodes.AddRange(boundsPoints);
+                        } else {
+                            continue;
+                        }
                     }
                     if (member.Role == "outer") {
                         area.OuterEdge.AddRange(lines[member.Id].Nodes);
-                    } else if (member.Role == "outer") {
+                    } else if (member.Role == "inner") {
                         area.InnerEdges.Add(lines[member.Id].Nodes);
                     }
                 }
@@ -185,6 +229,7 @@ public class GeoDocument {
         }
     }
 
+    // TODO: could these two share code? Ugly repeated code...
     internal void CombineAdjacentLineDrawsFor(string feature) {
         Dictionary<long, LineDrawCommand> lineToDraw = new();
         DrawCommands
@@ -244,7 +289,7 @@ public class GeoDocument {
                     var line1 = lineToDraw[endNode.LineId];
                     var line2 = lineToDraw[matchingLines[0]];
 
-                    Console.WriteLine($"Merging {line2.Obj.Id} {line2.Feature} to {line1.Obj.Id} {line1.Feature}");
+                    //Console.WriteLine($"Merging {line2.Obj.Id} {line2.Feature} to {line1.Obj.Id} {line1.Feature}");
 
                     // Change refs
                     lineToRef.Values.ToList().ForEach(r => {
