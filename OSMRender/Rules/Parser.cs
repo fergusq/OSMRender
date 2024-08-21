@@ -75,7 +75,7 @@ public class Parser {
         return outLines;
     }
 
-    public static Ruleset ParseRules(string ruleString, ILogger? logger = null) {
+    public static Ruleset ParseRules(string ruleString, Logger? logger = null) {
         var lines = ParseLines(ruleString);
         var rules = new Ruleset();
         var parser = new Parser(lines, rules, logger ?? new DummyLogger());
@@ -85,9 +85,9 @@ public class Parser {
 
     private readonly List<string> Lines;
     private readonly Ruleset Rules;
-    private readonly ILogger Logger;
+    private readonly Logger Logger;
 
-    private Parser(List<string> lines, Ruleset rules, ILogger logger) {
+    private Parser(List<string> lines, Ruleset rules, Logger logger) {
         Lines = lines;
         Rules = rules;
         Logger = logger;
@@ -698,9 +698,9 @@ public class Parser {
     private readonly struct DrawStatement : IStatement {
         private readonly string Type;
         private readonly int Importance;
-        private readonly ILogger Logger;
+        private readonly Logger Logger;
 
-        public DrawStatement(string type, int importance, ILogger logger) {
+        public DrawStatement(string type, int importance, Logger logger) {
             Type = type;
             Importance = importance;
             Logger = logger;
@@ -744,9 +744,9 @@ public class Parser {
     {
         private readonly ICondition Condition;
         private readonly IEnumerable<IStatement> Statements;
-        private readonly ILogger Logger;
+        private readonly Logger Logger;
 
-        public Rule(ICondition cond, IEnumerable<IStatement> statements, ILogger logger) {
+        public Rule(ICondition cond, IEnumerable<IStatement> statements, Logger logger) {
             Condition = cond;
             Statements = statements;
             Logger = logger;

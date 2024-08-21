@@ -1,0 +1,42 @@
+using System.Xml.Serialization;
+using OSMRender.Geo;
+using OSMRender.Logging;
+using OSMRender.Rules;
+using OsmSharp.API;
+
+namespace OSMRenderApp;
+
+public class Reader {
+
+    private readonly Logger Logger;
+
+    public Reader(Logger logger) {
+        Logger = logger;
+    }
+
+    public (GeoDocument, OSMRender.Geo.Bounds) ReadOSM(string path) {
+        Osm osm;
+        GeoDocument doc;
+
+        using (var stream = new FileStream(path, FileMode.Open)) {
+            XmlSerializer serializer = new(typeof(Osm));
+            osm = (Osm)(serializer.Deserialize(stream) ?? throw new NullReferenceException());
+            doc = GeoDocument.FromOSM(osm);
+        }
+
+        Logger.Debug($"Found {doc.Points.Count} points");
+        Logger.Debug($"Found {doc.Lines.Count} lines");
+        Logger.Debug($"Found {doc.Areas.Count} areas");
+        Logger.Debug($"Found {doc.Relations.Count} relations");
+
+        var bounds = osm.Bounds is not null && osm.Bounds.MinLatitude is not null ? OSMRender.Geo.Bounds.FromOsmBounds(osm.Bounds) : doc.Bounds;
+
+        return (doc, bounds);
+    }
+
+    public Ruleset ReadRules(string path) {
+        var ruleCode = File.ReadAllText(path);
+        var rules = Parser.ParseRules(ruleCode, Logger);
+        return rules;
+    }
+}

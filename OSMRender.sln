@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSMRender", "OSMRender.csproj", "{4AB35628-0222-418D-A533-41E0D1C929BD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSMRender", "OSMRender\OSMRender.csproj", "{4AB35628-0222-418D-A533-41E0D1C929BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSMRenderApp", "OSMRenderApp\OSMRenderApp.csproj", "{08D1168A-4232-4E9F-8B80-F0F097E2C566}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{4AB35628-0222-418D-A533-41E0D1C929BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4AB35628-0222-418D-A533-41E0D1C929BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4AB35628-0222-418D-A533-41E0D1C929BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08D1168A-4232-4E9F-8B80-F0F097E2C566}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08D1168A-4232-4E9F-8B80-F0F097E2C566}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08D1168A-4232-4E9F-8B80-F0F097E2C566}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08D1168A-4232-4E9F-8B80-F0F097E2C566}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
