@@ -63,13 +63,18 @@ public class GeoDocument {
             if (relation.Tags.Contains(new OsmSharp.Tags.Tag("type", "multipolygon"))) {
                 var area = new Area(relation.Id ?? 0, relation.Tags);
                 foreach (var member in relation.Members) {
+                    if (!lines.ContainsKey(member.Id)) {
+                        continue;
+                    }
                     if (member.Role == "outer") {
                         area.OuterEdge.AddRange(lines[member.Id].Nodes);
                     } else if (member.Role == "outer") {
                         area.InnerEdges.Add(lines[member.Id].Nodes);
                     }
                 }
-                areas[area.Id] = area;
+                if (area.OuterEdge.Count > 0) {
+                    areas[area.Id] = area;
+                }
             }
         }
 
@@ -134,7 +139,7 @@ public class GeoDocument {
                 foreach (var endNode2 in endNodeToRef[node]) {
                     if (endNode2.LineId == endNode.LineId) continue;
 
-                    if (lines[endNode2.LineId].Tags.Equals(tags)) {
+                    if (lines[endNode2.LineId].Tags?.Equals(tags) ?? false) {
                         matchingLines.Add(endNode2.LineId);
                     }
                 }
@@ -168,6 +173,97 @@ public class GeoDocument {
                         line1.Nodes.AddRange(line2.Nodes);
                     } else {
                         throw new Exception($"cannot merge lines {line1.Id}, {line2.Id}");
+                    }
+                }
+            }
+        }
+    }
+
+    internal void CombineAdjacentLineDraws() {
+        Dictionary<long, DrawText> lineToDraw = new();
+        DrawCommands
+            .Where(c => c is DrawText d && d.Points.Count > 0)
+            .Select(c => (DrawText) c)
+            .ToList()
+            .ForEach(p => lineToDraw[p.Obj.Id] = p);
+        Dictionary<long, HashSet<long>> nodeToLine = new();
+        Dictionary<long, HashSet<long>> endNodeToLine = new();
+        foreach(var drawText in lineToDraw.Values) {
+            if (drawText.Points.Count >= 2) {
+                foreach (var node in drawText.Points) {
+                    if (!nodeToLine.ContainsKey(node.Id)) {
+                        nodeToLine[node.Id] = new();
+                    }
+                    nodeToLine[node.Id].Add(drawText.Obj.Id);
+                }
+
+                var startId = drawText.Points[0].Id;
+                var endId = drawText.Points[^1].Id;
+                foreach (var node in new long[] { startId, endId }) {
+                    if (!endNodeToLine.ContainsKey(node)) {
+                        endNodeToLine[node] = new();
+                    }
+                    endNodeToLine[node].Add(drawText.Obj.Id);
+                }
+            }
+        }
+
+        var lineToRef = lineToDraw.Values.Select(l => new LineRef() { LineId = l.Obj.Id }).ToDictionary(l => l.LineId);
+
+        var nodeToRef = nodeToLine
+            .Select(p => (p.Key, Ref: p.Value.Select(l => lineToRef[l])))
+            .ToDictionary(p => p.Key, p => p.Ref);
+
+        var endNodeToRef = endNodeToLine
+            .Select(p => (p.Key, Ref: p.Value.Select(l => lineToRef[l])))
+            .ToDictionary(p => p.Key, p => p.Ref);
+
+        foreach(var node in Points.Keys) {
+            if (!endNodeToRef.ContainsKey(node)) {
+                continue;
+            }
+
+            foreach (var endNode in endNodeToRef[node]) {
+                var tags = lineToDraw[endNode.LineId].Properties;
+                List<long> matchingLines = new();
+                foreach (var endNode2 in endNodeToRef[node]) {
+                    if (endNode2.LineId == endNode.LineId) continue;
+
+                    if (lineToDraw[endNode2.LineId].Properties.All(p => tags.ContainsKey(p.Key) && tags[p.Key].Equals(p.Value))) {
+                        matchingLines.Add(endNode2.LineId);
+                    }
+                }
+
+                if (matchingLines.Count == 1) {
+                    var line1 = lineToDraw[endNode.LineId];
+                    var line2 = lineToDraw[matchingLines[0]];
+
+                    //Console.WriteLine($"Merging {line2.Id} to {line1.Id}");
+
+                    // Change refs
+                    lineToRef.Values.ToList().ForEach(r => {
+                        if (r.LineId == line2.Obj.Id) {
+                            r.LineId = line1.Obj.Id;
+                        }
+                    });
+
+                    // Remove fromlines
+                    lineToDraw.Remove(line2.Obj.Id);
+                    DrawCommands.Remove(line2);
+
+                    // Merge
+                    if (line1.Points[0].Id == line2.Points[0].Id) {
+                        line2.Points.Reverse();
+                        line1.Points.InsertRange(0, line2.Points);
+                    } else if (line1.Points[^1].Id == line2.Points[0].Id) {
+                        line1.Points.AddRange(line2.Points);
+                    } else if (line1.Points[0].Id == line2.Points[^1].Id) {
+                        line1.Points.InsertRange(0, line2.Points);
+                    } else if (line1.Points[^1].Id == line2.Points[^1].Id) {
+                        line2.Points.Reverse();
+                        line1.Points.AddRange(line2.Points);
+                    } else {
+                        throw new Exception($"cannot merge lines {line1.Obj.Id}, {line2.Obj.Id}");
                     }
                 }
             }

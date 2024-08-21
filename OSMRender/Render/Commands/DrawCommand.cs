@@ -6,9 +6,9 @@ namespace OSMRender.Render.Commands;
 
 public abstract class DrawCommand {
 
-    protected IDictionary<string, string> Properties;
+    public IDictionary<string, string> Properties { get; }
     public int Importance { get; }
-    protected GeoObj Obj;
+    public GeoObj Obj { get; }
 
     public Bounds Bounds => Obj.Bounds;
 

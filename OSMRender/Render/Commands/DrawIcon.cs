@@ -20,11 +20,15 @@ public class DrawIcon : DrawCommand {
         var y = renderer.LatitudeToY(lat);
         var size = Properties.ContainsKey("icon-width") ? GetNum("icon-width", renderer.Renderer.ZoomLevel, 1) : 10;
 
-        var image = GetImage(Properties["icon-image"]);
+        var image = GetImage(GetString("icon-image"));
+        if (image is null) {
+            renderer.Logger.Error($"Icon `{Properties["icon-image"]}' does not exist");
+            return;
+        }
         renderer.Graphics.DrawRasterImage(x - size/2, y - size/2, size, size, image);
     }
 
-    private static RasterImage GetImage(string path) {
+    private static RasterImage? GetImage(string path) {
         if (ImageCache.TryGetValue(path, out var image)) {
             return image;
         }
@@ -33,6 +37,8 @@ public class DrawIcon : DrawCommand {
             var path2 = Path.Combine(SearchPath, path);
             if (File.Exists(path2)) {
                 path = path2;
+            } else {
+                return null;
             }
         }
 

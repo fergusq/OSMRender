@@ -19,7 +19,8 @@ public class DrawShape : DrawCommand {
         Colour pathColour = GetColour("border-color", fillColour);
         double pathWidth = 1.0;
         GraphicsPath path = new();
-        if (Properties["shape"] == "custom") {
+        var shape = GetString("shape");
+        if (shape == "custom") {
             var def = Properties["shape-def"].Replace(" ", "").Split(";");
             foreach (var command in def) {
                 if (command.StartsWith("p:")) {
@@ -65,7 +66,7 @@ public class DrawShape : DrawCommand {
                 path.Close();
                 paths.Add(path);
             }
-        } else if (Properties["shape"] == "square") {
+        } else if (shape == "square") {
             path.MoveTo(-1, -1);
             path.LineTo(1, -1);
             path.LineTo(1, 1);
@@ -74,6 +75,9 @@ public class DrawShape : DrawCommand {
             paths.Add(path);
             renderer.Graphics.FillPath(path, fillColour);
             renderer.Graphics.StrokePath(path, pathColour, pathWidth);
+        } else {
+            renderer.Logger.Error($"Unknown shape `{shape}'");
+            return;
         }
 
         var size = Properties.ContainsKey("shape-size") ? GetNum("shape-size", renderer.Renderer.ZoomLevel) : 1;

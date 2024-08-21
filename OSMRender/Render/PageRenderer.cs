@@ -1,3 +1,4 @@
+using OSMRender.Logging;
 using VectSharp;
 
 namespace OSMRender.Render;
@@ -16,6 +17,8 @@ public class PageRenderer {
     public int TileWidth { get; set; }
     public int TileHeight { get; set; }
 
+    internal Logger Logger;
+
     public Geo.Bounds TileBounds => Geo.Bounds.From(
         Renderer.TileNumberToLatitude(TileY + TileHeight),
         Renderer.TileNumberToLatitude(TileY),
@@ -23,13 +26,14 @@ public class PageRenderer {
         Renderer.TileNumberToLongitude(TileX + TileWidth)
     );
 
-    public PageRenderer(Renderer renderer, Page page, int tileX, int tileY, int tileWidth = 1, int tileHeight = 1) {
+    public PageRenderer(Renderer renderer, Page page, Logger logger, int tileX, int tileY, int tileWidth = 1, int tileHeight = 1) {
         Renderer = renderer;
         Page = page;
         TileX = tileX;
         TileY = tileY;
         TileWidth = tileWidth;
         TileHeight = tileHeight;
+        Logger = logger;
     }
 
     public double LongitudeToX(double longitude) {

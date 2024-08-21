@@ -80,7 +80,7 @@ public class Renderer {
             var page = new Page(256 * tileWidth, 256 * tileHeight);
             pages[(MinTileX, MinTileY)] = page;
             Logger.Debug($"Generating {page.Width}x{page.Height} page");
-            var pageRenderer = new PageRenderer(this, page, MinTileX, MinTileY);
+            var pageRenderer = new PageRenderer(this, page, Logger, MinTileX, MinTileY);
             var bounds = pageRenderer.TileBounds.Extend(1.1);
             Logger.Debug("Bounds: " + pageRenderer.TileBounds.ToString());
             foreach (var layer in layers.Keys.OrderBy(key => key))
@@ -133,7 +133,7 @@ public class Renderer {
     private void RenderPage(Dictionary<int, List<DrawCommand>> layers, int x, int y, out Page page, out bool empty)
     {
         page = new Page(256, 256);
-        var pageRenderer = new PageRenderer(this, page, x, y);
+        var pageRenderer = new PageRenderer(this, page, Logger, x, y);
         var bounds = pageRenderer.TileBounds.Extend(1.1);
         Logger.Debug($"Drawing tile {x}/{y} ({pageRenderer.TileBounds})...");
         empty = true;

@@ -4,7 +4,11 @@ using VectSharp;
 namespace OSMRender.Render.Commands;
 
 public class DrawText : DrawCommand {
+    internal List<Geo.Point> Points { get; } = new();
     public DrawText(IDictionary<string, string> properties, int importance, GeoObj obj) : base(properties, importance, obj) {
+        if (obj is Line line) {
+            Points.AddRange(line.Nodes);
+        }
     }
 
     public override void Draw(PageRenderer renderer, int layer) {
@@ -47,11 +51,8 @@ public class DrawText : DrawCommand {
             }
         }
 
-        double lat = 0, lon = 0;
-        if (Obj is Line line) {
-            if (line.Nodes.Count < 2) return;
-
-            var nodes = line.Nodes[0].Longitude < line.Nodes[^1].Longitude ? line.Nodes : line.Nodes.AsEnumerable().Reverse();
+        if (Obj is Line && Points.Count >= 2) {
+            var nodes = Points[0].Longitude < Points[^1].Longitude ? Points : Points.AsEnumerable().Reverse();
             GraphicsPath path = new();
             foreach (var node in nodes) {
                 path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
@@ -62,7 +63,7 @@ public class DrawText : DrawCommand {
             }
             renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color"), reference: 0.5, anchor: anchor, textBaseline: TextBaselines.Middle);
             return;
-        } else if (TryGetCoordinates(out lat, out lon)) {
+        } else if (TryGetCoordinates(out double lat, out double lon)) {
             double x = renderer.LongitudeToX(lon), y = renderer.LatitudeToY(lat);
 
             y += GetNum("text-offset-vertical", renderer.Renderer.ZoomLevel, fontSize);
