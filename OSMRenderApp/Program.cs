@@ -1,6 +1,7 @@
 ﻿using OSMRender.Logging;
 using Mono.Options;
 using OSMRenderApp;
+using OSMRender.Render.Commands;
 
 /** Options **/
 var verbosity = 0;
@@ -55,6 +56,7 @@ logger.Level = verbosity == 0 ? Logger.LoggingLevel.Info : Logger.LoggingLevel.D
 
 Reader reader = new(logger);
 
+DrawIcon.SearchPath = Path.GetDirectoryName(rulesetPath) ?? "";
 var rules = reader.ReadRules(rulesetPath);
 var (doc, bounds) = reader.ReadOSM(inputPath);
 rules.Apply(doc);

@@ -7,6 +7,7 @@ namespace OSMRender.Render.Commands;
 public class DrawIcon : DrawCommand {
 
     private static Dictionary<string, RasterImage> ImageCache = new();
+    public static string SearchPath { get; set; } = "";
     
     public DrawIcon(IDictionary<string, string> properties, int importance, GeoObj obj) : base(properties, importance, obj) {
     }
@@ -26,6 +27,13 @@ public class DrawIcon : DrawCommand {
     private static RasterImage GetImage(string path) {
         if (ImageCache.TryGetValue(path, out var image)) {
             return image;
+        }
+
+        if (!File.Exists(path)) {
+            var path2 = Path.Combine(SearchPath, path);
+            if (File.Exists(path2)) {
+                path = path2;
+            }
         }
 
         var newImage = new RasterImageFile(path);
