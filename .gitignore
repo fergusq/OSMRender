@@ -1,2 +1,4 @@
 bin/
 obj/
+export.osm
+export.pdf
