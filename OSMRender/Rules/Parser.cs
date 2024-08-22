@@ -867,8 +867,9 @@ public class Parser {
                 doc.DrawCommands.Add(new DrawIcon(state.Properties, Importance, feature.Name, feature.Obj));
                 break;
             case "shield":
-                doc.DrawCommands.Add(new DrawText(state.Properties, Importance, feature.Name, feature.Obj));
-                doc.DrawCommands.Add(new DrawShape(state.Properties, Importance, feature.Name, feature.Obj));
+                // TODO: implement
+                //doc.DrawCommands.Add(new DrawText(state.Properties, Importance, feature.Name, feature.Obj));
+                //doc.DrawCommands.Add(new DrawShape(state.Properties, Importance, feature.Name, feature.Obj));
                 break;
             }
         }
