@@ -126,29 +126,45 @@ public class GeoDocument {
     }
 
     private static void CombineAdjacentLines(Dictionary<long, Point> points, Dictionary<long, Line> lines) {
+        CombineAdjacentFor(points.Keys, lines, line => {});
+    }
+
+    internal void CombineAdjacentLineDraws() {
+        foreach (var feature in DrawCommands.Select(c => c.Feature).ToHashSet()) {
+            Dictionary<long, LineDrawCommand> lineToDraw = new();
+            DrawCommands
+                .Where(c => c.Feature == feature && c is LineDrawCommand d && d.Nodes.Count > 0)
+                .Select(c => (LineDrawCommand) c)
+                .ToList()
+                .ForEach(p => lineToDraw[p.Obj.Id] = p);
+            CombineAdjacentFor(Points.Keys, lineToDraw, l => DrawCommands.Remove(l));
+        }
+    }
+
+    private static void CombineAdjacentFor<T>(IEnumerable<long> points, Dictionary<long, T> lineToDraw, Action<T> remove) where T : IMergeableLine {
         Dictionary<long, HashSet<long>> nodeToLine = new();
         Dictionary<long, HashSet<long>> endNodeToLine = new();
-        foreach(var line in lines.Values) {
-            if (line.Nodes.Count >= 2) {
-                foreach (var node in line.Nodes) {
+        foreach(var drawCmd in lineToDraw.Values) {
+            if (drawCmd.Nodes.Count >= 2) {
+                foreach (var node in drawCmd.Nodes) {
                     if (!nodeToLine.ContainsKey(node.Id)) {
                         nodeToLine[node.Id] = new();
                     }
-                    nodeToLine[node.Id].Add(line.Id);
+                    nodeToLine[node.Id].Add(drawCmd.MergeableLineId);
                 }
 
-                var startId = line.Nodes[0].Id;
-                var endId = line.Nodes[^1].Id;
+                var startId = drawCmd.Nodes[0].Id;
+                var endId = drawCmd.Nodes[^1].Id;
                 foreach (var node in new long[] { startId, endId }) {
                     if (!endNodeToLine.ContainsKey(node)) {
                         endNodeToLine[node] = new();
                     }
-                    endNodeToLine[node].Add(line.Id);
+                    endNodeToLine[node].Add(drawCmd.MergeableLineId);
                 }
             }
         }
 
-        var lineToRef = lines.Values.Select(l => new LineRef() { LineId = l.Id }).ToDictionary(l => l.LineId);
+        var lineToRef = lineToDraw.Values.Select(l => new LineRef() { LineId = l.MergeableLineId }).ToDictionary(l => l.LineId);
 
         var nodeToRef = nodeToLine
             .Select(p => (p.Key, Ref: p.Value.Select(l => lineToRef[l])))
@@ -158,37 +174,38 @@ public class GeoDocument {
             .Select(p => (p.Key, Ref: p.Value.Select(l => lineToRef[l])))
             .ToDictionary(p => p.Key, p => p.Ref);
 
-        foreach(var node in points.Keys) {
+        foreach(var node in points) {
             if (!endNodeToRef.ContainsKey(node)) {
                 continue;
             }
 
             foreach (var endNode in endNodeToRef[node]) {
-                var tags = lines[endNode.LineId].Tags;
+                var tags = lineToDraw[endNode.LineId].MergeableLineProperties;
                 List<long> matchingLines = new();
                 foreach (var endNode2 in endNodeToRef[node]) {
                     if (endNode2.LineId == endNode.LineId) continue;
 
-                    if (lines[endNode2.LineId].Tags?.Equals(tags) ?? false) {
+                    if (lineToDraw[endNode2.LineId].MergeableLineProperties.All(p => tags.ContainsKey(p.Key) && tags[p.Key].Equals(p.Value))) {
                         matchingLines.Add(endNode2.LineId);
                     }
                 }
 
                 if (matchingLines.Count == 1) {
-                    var line1 = lines[endNode.LineId];
-                    var line2 = lines[matchingLines[0]];
+                    var line1 = lineToDraw[endNode.LineId];
+                    var line2 = lineToDraw[matchingLines[0]];
 
-                    //Console.WriteLine($"Merging {line2.Id} to {line1.Id}");
+                    //Console.WriteLine($"Merging {line2.MergeableLineId} {line2.Feature} to {line1.MergeableLineId} {line1.Feature}");
 
                     // Change refs
                     lineToRef.Values.ToList().ForEach(r => {
-                        if (r.LineId == line2.Id) {
-                            r.LineId = line1.Id;
+                        if (r.LineId == line2.MergeableLineId) {
+                            r.LineId = line1.MergeableLineId;
                         }
                     });
 
                     // Remove fromlines
-                    lines.Remove(line2.Id);
+                    lineToDraw.Remove(line2.MergeableLineId);
+                    remove.Invoke(line2);
 
                     // Merge
                     if (line1.Nodes[0].Id == line2.Nodes[0].Id) {
@@ -202,105 +219,7 @@ public class GeoDocument {
                         line2.Nodes.Reverse();
                         line1.Nodes.AddRange(line2.Nodes);
                     } else {
-                        throw new Exception($"cannot merge lines {line1.Id}, {line2.Id}");
-                    }
-                }
-            }
-        }
-    }
-
-    internal void CombineAdjacentLineDraws() {
-        foreach (var feature in DrawCommands.Select(c => c.Feature).ToHashSet()) {
-            CombineAdjacentLineDrawsFor(feature);
-        }
-    }
-
-    // TODO: could these two share code? Ugly repeated code...
-    internal void CombineAdjacentLineDrawsFor(string feature) {
-        Dictionary<long, LineDrawCommand> lineToDraw = new();
-        DrawCommands
-            .Where(c => c.Feature == feature && c is LineDrawCommand d && d.Points.Count > 0)
-            .Select(c => (LineDrawCommand) c)
-            .ToList()
-            .ForEach(p => lineToDraw[p.Obj.Id] = p);
-        Dictionary<long, HashSet<long>> nodeToLine = new();
-        Dictionary<long, HashSet<long>> endNodeToLine = new();
-        foreach(var drawCmd in lineToDraw.Values) {
-            if (drawCmd.Points.Count >= 2) {
-                foreach (var node in drawCmd.Points) {
-                    if (!nodeToLine.ContainsKey(node.Id)) {
-                        nodeToLine[node.Id] = new();
-                    }
-                    nodeToLine[node.Id].Add(drawCmd.Obj.Id);
-                }
-
-                var startId = drawCmd.Points[0].Id;
-                var endId = drawCmd.Points[^1].Id;
-                foreach (var node in new long[] { startId, endId }) {
-                    if (!endNodeToLine.ContainsKey(node)) {
-                        endNodeToLine[node] = new();
-                    }
-                    endNodeToLine[node].Add(drawCmd.Obj.Id);
-                }
-            }
-        }
-
-        var lineToRef = lineToDraw.Values.Select(l => new LineRef() { LineId = l.Obj.Id }).ToDictionary(l => l.LineId);
-
-        var nodeToRef = nodeToLine
-            .Select(p => (p.Key, Ref: p.Value.Select(l => lineToRef[l])))
-            .ToDictionary(p => p.Key, p => p.Ref);
-
-        var endNodeToRef = endNodeToLine
-            .Select(p => (p.Key, Ref: p.Value.Select(l => lineToRef[l])))
-            .ToDictionary(p => p.Key, p => p.Ref);
-
-        foreach(var node in Points.Keys) {
-            if (!endNodeToRef.ContainsKey(node)) {
-                continue;
-            }
-
-            foreach (var endNode in endNodeToRef[node]) {
-                var tags = lineToDraw[endNode.LineId].Properties;
-                List<long> matchingLines = new();
-                foreach (var endNode2 in endNodeToRef[node]) {
-                    if (endNode2.LineId == endNode.LineId) continue;
-
-                    if (lineToDraw[endNode2.LineId].Properties.All(p => tags.ContainsKey(p.Key) && tags[p.Key].Equals(p.Value))) {
-                        matchingLines.Add(endNode2.LineId);
-                    }
-                }
-
-                if (matchingLines.Count == 1) {
-                    var line1 = lineToDraw[endNode.LineId];
-                    var line2 = lineToDraw[matchingLines[0]];
-
-                    //Console.WriteLine($"Merging {line2.Obj.Id} {line2.Feature} to {line1.Obj.Id} {line1.Feature}");
-
-                    // Change refs
-                    lineToRef.Values.ToList().ForEach(r => {
-                        if (r.LineId == line2.Obj.Id) {
-                            r.LineId = line1.Obj.Id;
-                        }
-                    });
-
-                    // Remove fromlines
-                    lineToDraw.Remove(line2.Obj.Id);
-                    DrawCommands.Remove(line2);
-
-                    // Merge
-                    if (line1.Points[0].Id == line2.Points[0].Id) {
-                        line2.Points.Reverse();
-                        line1.Points.InsertRange(0, line2.Points);
-                    } else if (line1.Points[^1].Id == line2.Points[0].Id) {
-                        line1.Points.AddRange(line2.Points);
-                    } else if (line1.Points[0].Id == line2.Points[^1].Id) {
-                        line1.Points.InsertRange(0, line2.Points);
-                    } else if (line1.Points[^1].Id == line2.Points[^1].Id) {
-                        line2.Points.Reverse();
-                        line1.Points.AddRange(line2.Points);
-                    } else {
-                        throw new Exception($"cannot merge lines {line1.Obj.Id}, {line2.Obj.Id}");
+                        throw new Exception($"cannot merge lines {line1.MergeableLineId}, {line2.MergeableLineId}");
                     }
                 }
             }

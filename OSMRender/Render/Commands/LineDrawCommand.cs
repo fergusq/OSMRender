@@ -17,13 +17,17 @@ using OSMRender.Geo;
 
 namespace OSMRender.Render.Commands;
 
-public abstract class LineDrawCommand : DrawCommand {
+public abstract class LineDrawCommand : DrawCommand, IMergeableLine {
 
-    internal List<Point> Points { get; } = new();
+    public List<Point> Nodes { get; } = new();
+
+    public long MergeableLineId => Obj.Id;
+
+    public IDictionary<string, string> MergeableLineProperties => Properties;
 
     protected LineDrawCommand(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : base(properties, importance, feature, obj) {
         if (obj is Line line) {
-            Points.AddRange(line.Nodes);
+            Nodes.AddRange(line.Nodes);
         }
     }
 }
