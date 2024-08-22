@@ -33,16 +33,31 @@ public class Area : GeoObj {
         InnerEdges = new();
     }
 
-    public IEnumerable<Point> Edge {
-        get {
-            var edge = new List<Point>();
+    public IEnumerable<Point> CalculateEdge() {
+        var edge = new List<Point>();
+        if (OuterEdges.Count > 0) {
+            var dir = IsClockwise(OuterEdges[0]);
             foreach (var outer in OuterEdges) {
-                edge.AddRange(outer);
+                edge.AddRange(IsClockwise(outer) == dir ? outer : outer.AsEnumerable().Reverse());
+                edge.Add(OuterEdges[0].First());
             }
             foreach (var inner in InnerEdges) {
-                edge.AddRange(inner);
+                edge.AddRange(IsClockwise(inner) != dir ? inner : inner.AsEnumerable().Reverse());
+                edge.Add(OuterEdges[0].First());
             }
-            return edge;
         }
+        return edge;
+    }
+
+    private static bool IsClockwise(IList<Point> points) {
+        var n = points.Count;
+        if (points.First().Id == points.Last().Id) {
+            n--;
+        }
+        var sum = 0.0;
+        for (int i = 0; i < n-1; i++) {
+            sum += (points[i+1].Longitude - points[i].Longitude) * (points[i+1].Latitude + points[i].Latitude);
+        }
+        return sum > 0;
     }
 }

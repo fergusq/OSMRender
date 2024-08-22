@@ -72,8 +72,10 @@ public class DrawText : LineDrawCommand {
             }
         }
 
-        if (Obj is Line && Points.Count >= 2) {
-            var nodes = Points[0].Longitude < Points[^1].Longitude ? Points : Points.AsEnumerable().Reverse();
+        var halo = GetNum("text-halo-width", renderer.Renderer.ZoomLevel, 1f);
+        var haloColour = GetColour("text-halo-color", "text-halo-opacity", defaultColour: Colours.White);
+        if (Obj is Line && Nodes.Count >= 2) {
+            var nodes = Nodes[0].Longitude < Nodes[^1].Longitude ? Nodes : Nodes.AsEnumerable().Reverse();
             GraphicsPath path = new();
             foreach (var node in nodes) {
                 path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
@@ -81,12 +83,11 @@ public class DrawText : LineDrawCommand {
 
             int n = (int) Math.Ceiling(path.MeasureLength() / LINE_TEXT_INTERVAL);
 
-            var halo = GetNum("text-halo-width", renderer.Renderer.ZoomLevel, 1f);
             for (int i = 0; i < n; i++) {
                 if (halo > 0) { // TODO halo widths
-                    renderer.Graphics.StrokeTextOnPath(path, text, font, GetColour("text-halo-color", Colours.White), reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle, lineWidth: 1);
+                    renderer.Graphics.StrokeTextOnPath(path, text, font, haloColour, reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle, lineWidth: 1);
                 }
-                renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color"), reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle);
+                renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color", "text-opacity"), reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle);
             }
             return;
         } else if (TryGetCoordinates(out double lat, out double lon)) {
@@ -97,10 +98,10 @@ public class DrawText : LineDrawCommand {
             GraphicsPath path = new();
             path.LineTo(x-1, y);
             path.LineTo(x+1, y);
-            if (GetNum("text-halo-width", renderer.Renderer.ZoomLevel, 1f) > 0) { // TODO halo widths
-                renderer.Graphics.StrokeTextOnPath(path, text, font, GetColour("text-halo-color", Colours.White), reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle, lineWidth: 1);
+            if (halo > 0) { // TODO halo widths
+                renderer.Graphics.StrokeTextOnPath(path, text, font, haloColour, reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle, lineWidth: 1);
             }
-            renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color"), reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle);
+            renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color", "text-opacity"), reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle);
         }
     }
 

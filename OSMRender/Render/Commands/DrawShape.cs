@@ -22,6 +22,7 @@ namespace OSMRender.Render.Commands;
 public class DrawShape : LineDrawCommand {
 
     private readonly static double LINE_SHAPE_INTERVAL = 100;
+    private readonly static double MIN_LINE_SHAPE_LEN = LINE_SHAPE_INTERVAL / 2;
 
     public DrawShape(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : base(properties, importance, feature, obj) {
     }
@@ -30,8 +31,8 @@ public class DrawShape : LineDrawCommand {
         if (layer != Layer) return;
 
         List<GraphicsPath> paths = new();
-        Colour fillColour = GetColour("fill-color");
-        Colour pathColour = GetColour("border-color", GetColour("line-color", fillColour));
+        Colour fillColour = GetColour("fill-color", "fill-opacity");
+        Colour pathColour = GetColour("border-color", "border-opacity", defaultColour: GetColour("line-color", "line-opacity", defaultColour: fillColour));
         double pathWidth = 1.0;
         GraphicsPath path = new();
         var shape = GetString("shape");
@@ -108,22 +109,24 @@ public class DrawShape : LineDrawCommand {
 
         if (Obj is Line) {
             var linePath = new GraphicsPath();
-            foreach (var node in Points) {
+            foreach (var node in Nodes) {
                 linePath.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
             }
 
             // Draw shape along the line at intervals of LINE_SHAPE_INTERVAL units
             var len = linePath.MeasureLength();
-            for (double i = 0; i < len; i += LINE_SHAPE_INTERVAL) {
-                var position = linePath.GetPointAtAbsolute(i);
-                var tangent = linePath.GetTangentAtAbsolute(i);
-                var angle = Math.Atan2(tangent.Y, tangent.X) + angleOffset;
+            if (len >= MIN_LINE_SHAPE_LEN) {
+                for (double i = MIN_LINE_SHAPE_LEN; i < len; i += LINE_SHAPE_INTERVAL) {
+                    var position = linePath.GetPointAtAbsolute(i);
+                    var tangent = linePath.GetTangentAtAbsolute(i);
+                    var angle = Math.Atan2(tangent.Y, tangent.X) + angleOffset;
 
-                foreach (var path1 in paths) {
-                    var max = Math.Max(path1.GetBounds().Size.Height, path1.GetBounds().Size.Width);
-                    var transformed = path1.Transform(p => Rotate(p, angle)).Transform(p => new VectSharp.Point(position.X + p.X/max*size, position.Y + p.Y/max*size));
-                    renderer.Graphics.FillPath(transformed, fillColour);
-                    renderer.Graphics.StrokePath(transformed, pathColour, pathWidth);
+                    foreach (var path1 in paths) {
+                        var max = Math.Max(path1.GetBounds().Size.Height, path1.GetBounds().Size.Width);
+                        var transformed = path1.Transform(p => Rotate(p, angle)).Transform(p => new VectSharp.Point(position.X + p.X/max*size, position.Y + p.Y/max*size));
+                        renderer.Graphics.FillPath(transformed, fillColour);
+                        renderer.Graphics.StrokePath(transformed, pathColour, pathWidth);
+                    }
                 }
             }
         } else {

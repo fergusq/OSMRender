@@ -35,7 +35,7 @@ public class DrawBackground : DrawCommand {
         path.LineTo(renderer.LongitudeToX(Background.Bounds.MaxLatitude), renderer.LatitudeToY(Background.Bounds.MinLatitude));
         path.Close();
 
-        renderer.Graphics.FillPath(path, GetColour("map-background-color"));
+        renderer.Graphics.FillPath(path, GetColour("map-background-color", "map-background-opacity"));
     }
 
     public override IEnumerable<int> GetLayers() {

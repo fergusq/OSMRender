@@ -33,32 +33,17 @@ public class DrawFill : DrawCommand {
             // Draw outer edges as separate polygons if there are no inner edges
             if (Area.InnerEdges.Count == 0) {
                 foreach (var outer in Area.OuterEdges) {
-                    var path = new GraphicsPath();
-                    var first = outer.First();
-                    path.MoveTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
-                    foreach (var node in outer.Skip(1)) {
-                        path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
-                    }
-                    path.LineTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
-                    path.Close();
-                    paths.Add(path);
+                    paths.Add(NodesToPath(renderer, outer));
                 }
             }
 
             // Draw everything together (TODO: this is bad, use intersections)
             else {
-                var path = new GraphicsPath();
-                var first = Area.Edge.First();
-                path.MoveTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
-                foreach (var node in Area.Edge.Skip(1)) {
-                    path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
-                }
-                path.LineTo(renderer.LongitudeToX(first.Longitude), renderer.LatitudeToY(first.Latitude));
-                paths.Add(path);
+                paths.Add(NodesToPath(renderer, Area.CalculateEdge()));
             }
 
             foreach (var path in paths) {
-                renderer.Graphics.FillPath(path, GetColour("fill-color"));
+                renderer.Graphics.FillPath(path, GetColour("fill-color", "fill-opacity"));
 
                 if (GetString("border-style") != "") {
                     StrokePath(path, renderer, "border");
