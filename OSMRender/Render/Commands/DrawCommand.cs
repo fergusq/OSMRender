@@ -167,9 +167,9 @@ public abstract class DrawCommand {
             var val = Properties[property];
             if (val.Contains(':')) {
                 float ans = 0;
-                foreach (var pair in val.Split(";")) {
-                    float level = float.Parse(pair[..pair.IndexOf(':')], CultureInfo.InvariantCulture);
-                    float value = ParseFloat(pair[(pair.IndexOf(':')+1)..], baseVal);
+                foreach (var pair in val.Split(';')) {
+                    float level = float.Parse(pair.Substring(0, pair.IndexOf(':')), CultureInfo.InvariantCulture);
+                    float value = ParseFloat(pair.Substring(pair.IndexOf(':')+1), baseVal);
                     if (zoomLevel >= level) {
                         ans = value;
                     }
@@ -185,7 +185,7 @@ public abstract class DrawCommand {
 
     protected static float ParseFloat(string val, float baseVal) {
         if (val.EndsWith("%")) {
-            val = val[..^1].Trim();
+            val = val.Substring(0, val.Length - 1).Trim();
             float value = float.Parse(val, CultureInfo.InvariantCulture);
             return value / 100f * baseVal;
         } else {
