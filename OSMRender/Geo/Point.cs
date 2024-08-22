@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
 
-using OsmSharp.Tags;
-
 namespace OSMRender.Geo;
 
 /// <summary>
@@ -28,7 +26,7 @@ public class Point : GeoObj {
 
     public override Bounds Bounds => Bounds.FromPoint(Latitude, Longitude);
 
-    public Point(long id, TagsCollectionBase tags, double lat, double lon) : base(id, tags) {
+    public Point(long id, IDictionary<string, string> tags, double lat, double lon) : base(id, tags) {
         Latitude = lat;
         Longitude = lon;
     }

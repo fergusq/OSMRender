@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
 
-using OsmSharp.Tags;
-
 namespace OSMRender.Geo;
 
 /// <summary>
@@ -32,7 +30,7 @@ public class Relation : GeoObj {
 
     public override Bounds Bounds => Members.Select(n => n.Value.Bounds).Aggregate((a, b) => a.MergeWith(b));
 
-    public Relation(long id, TagsCollectionBase tags) : base(id, tags) {
+    public Relation(long id, IDictionary<string, string> tags) : base(id, tags) {
         Members = new List<Member>();
     }
 }

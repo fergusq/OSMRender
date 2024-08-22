@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
 
-using OsmSharp.Tags;
+using System.Collections.Immutable;
 
 namespace OSMRender.Geo;
 
@@ -24,11 +24,11 @@ namespace OSMRender.Geo;
 public abstract class GeoObj {
     public long Id { get; set; }
 
-    public TagsCollectionBase Tags { get; set; }
+    public ImmutableDictionary<string, string> Tags { get; set; }
 
-    protected GeoObj(long id, TagsCollectionBase tags) {
+    protected GeoObj(long id, IDictionary<string, string> tags) {
         Id = id;
-        Tags = tags;
+        Tags = tags.ToImmutableDictionary();
     }
 
     public abstract Bounds Bounds { get; }

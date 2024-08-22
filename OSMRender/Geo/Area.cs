@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
 
-using OsmSharp.Tags;
-
 namespace OSMRender.Geo;
 
 /// <summary>
@@ -32,7 +30,7 @@ public class Area : GeoObj {
     public double MeanLatitude => OuterEdges.SelectMany(e => e).Select(p => p.Latitude).Sum() / OuterEdges.SelectMany(e => e).Count();
     public double MeanLongitude => OuterEdges.SelectMany(e => e).Select(p => p.Longitude).Sum() / OuterEdges.SelectMany(e => e).Count();
 
-    public Area(long id, TagsCollectionBase tags) : base(id, tags) {
+    public Area(long id, IDictionary<string, string> tags) : base(id, tags) {
         OuterEdges = new();
         InnerEdges = new();
     }

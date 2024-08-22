@@ -10,7 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OsmSharp" Version="7.0.0-pre022" />
     <PackageReference Include="VectSharp" Version="2.6.1-a1" />
     <PackageReference Include="BigGustave" Version="1.0.6" />
   </ItemGroup>

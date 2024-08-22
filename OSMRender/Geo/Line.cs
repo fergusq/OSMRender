@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
 
-using OsmSharp.Tags;
-
 namespace OSMRender.Geo;
 
 /// <summary>
@@ -27,11 +25,11 @@ public class Line : GeoObj, IMergeableLine {
 
     public long MergeableLineId => Id;
 
-    public IDictionary<string, string> MergeableLineProperties => Tags?.ToDictionary(t => t.Key, t => t.Value) ?? new();
+    public IDictionary<string, string> MergeableLineProperties => Tags;
 
     public override Bounds Bounds => Nodes.Select(n => n.Bounds).Aggregate((a, b) => a.MergeWith(b));
 
-    public Line(long id, TagsCollectionBase tags) : base(id, tags) {
+    public Line(long id, IDictionary<string, string> tags) : base(id, tags) {
         Nodes = new List<Point>();
     }
 }

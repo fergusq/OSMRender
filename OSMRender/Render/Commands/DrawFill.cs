@@ -59,7 +59,6 @@ public class DrawFill : DrawCommand {
 
     private int Layer => GetLayerCode(
         0,
-        0,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags.GetValue("layer")) : 0
+        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0
     );
 }

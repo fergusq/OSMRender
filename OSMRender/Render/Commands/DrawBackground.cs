@@ -45,7 +45,6 @@ public class DrawBackground : DrawCommand {
 
     private int Layer => GetLayerCode(
         -1,
-        0,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags.GetValue("layer")) : 0
+        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0
     );
 }

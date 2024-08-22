@@ -40,10 +40,6 @@ public readonly struct Bounds {
         return new Bounds(latitude, latitude, longitude, longitude);
     }
 
-    public static Bounds FromOsmBounds(OsmSharp.API.Bounds bounds) {
-        return new Bounds(bounds.MinLatitude ?? 0f, bounds.MaxLatitude ?? 0f, bounds.MinLongitude ?? 0f, bounds.MaxLongitude ?? 0f);
-    }
-
     public Bounds MergeWith(Bounds other) {
         return new Bounds(
             Math.Min(MinLatitude, other.MinLatitude),

@@ -47,13 +47,13 @@ public class DrawLine : DrawCommand {
 
     private int StrokeLayer => GetLayerCode(
         1,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags.GetValue("layer")) : 0,
+        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0,
         0
     );
 
     private int FillLayer => GetLayerCode(
         1,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags.GetValue("layer")) : 0,
+        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0,
         1
     );
 }

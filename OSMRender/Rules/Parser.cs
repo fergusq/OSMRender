@@ -428,7 +428,7 @@ public class Parser {
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
-            return obj.Tags is not null && obj.Tags.ContainsKey(Key) && Val.Contains(obj.Tags.GetValue(Key));
+            return obj.Tags is not null && obj.Tags.ContainsKey(Key) && Val.Contains(obj.Tags[Key]);
         }
     }
 
@@ -462,7 +462,7 @@ public class Parser {
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
-            return obj.Tags is not null && obj.Tags.ContainsKey(Key) && double.Parse(obj.Tags.GetValue(Key), CultureInfo.InvariantCulture) % Num == 0;
+            return obj.Tags is not null && obj.Tags.ContainsKey(Key) && double.Parse(obj.Tags[Key], CultureInfo.InvariantCulture) % Num == 0;
         }
     }
 
@@ -890,7 +890,7 @@ public class Parser {
         }
 
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state) {
-            Logger.Debug($"Found target for {feature.Name} {feature.Obj.Id} {feature.Obj.Tags.GetValue("name")}");
+            Logger.Debug($"Found target for {feature.Name} {feature.Obj.Id} {(feature.Obj.Tags.TryGetValue("name", out var name) ? name : "")}");
             foreach (var stmt in Statements) {
                 try {
                     stmt.Apply(doc, feature, state);

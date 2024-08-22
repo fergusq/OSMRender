@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
 
-using OsmSharp.Tags;
-
 namespace OSMRender.Geo;
 
 /// <summary>
@@ -25,7 +23,7 @@ public class Background : GeoObj {
 
     public override Bounds Bounds { get; }
 
-    public Background(long id, TagsCollectionBase tags, Bounds bounds) : base(id, tags) {
+    public Background(long id, IDictionary<string, string> tags, Bounds bounds) : base(id, tags) {
         Bounds = bounds;
     }
 }

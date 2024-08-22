@@ -168,7 +168,7 @@ public abstract class DrawCommand {
             if (val.Contains(':')) {
                 float ans = 0;
                 foreach (var pair in val.Split(";")) {
-                    int level = int.Parse(pair[..pair.IndexOf(':')]);
+                    float level = float.Parse(pair[..pair.IndexOf(':')], CultureInfo.InvariantCulture);
                     float value = ParseFloat(pair[(pair.IndexOf(':')+1)..], baseVal);
                     if (zoomLevel >= level) {
                         ans = value;
