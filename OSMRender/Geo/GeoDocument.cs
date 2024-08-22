@@ -19,6 +19,11 @@ using OsmSharp.Tags;
 
 namespace OSMRender.Geo;
 
+/// <summary>
+/// Represents an OSM document. Contains all points, lines, areas, relations, etc. contained within the document.
+/// It also contains DrawCommands associated with the map features.
+/// Initially, there are no draw commands; they must be added by applying a Ruleset to the GeoDocument.
+/// </summary>
 public class GeoDocument {
     public IDictionary<long, Point> Points { get; set; }
     public IDictionary<long, Area> Areas { get; set; }
@@ -36,6 +41,12 @@ public class GeoDocument {
         DrawCommands = new List<DrawCommand>();
     }
 
+    /// <summary>
+    /// Creates a new GeoDocument from OSM data. Adds nodes as Points, ways as Lines and Areas, and relations as Areas or Relations.
+    /// If a way has the same start and end point, it is added both as a Line and an Area. Similarly, multipolygon relations are added both as Relations and Areas.
+    /// </summary>
+    /// <param name="source">the OSM data</param>
+    /// <returns>the GeoDocument</returns>
     public static GeoDocument FromOSM(Osm source) {
 
         Dictionary<long, Point> points = new();
@@ -141,6 +152,14 @@ public class GeoDocument {
         }
     }
 
+    /// <summary>
+    /// Merges lines by joining two adjacents lines together if they share the same properties.
+    /// </summary>
+    /// <typeparam name="T">the type of line being merged, must implement IMergeableLine</typeparam>
+    /// <param name="points">points which the lines are made of</param>
+    /// <param name="lineToDraw">a mapping from line id to line</param>
+    /// <param name="remove">an action used to remove lines that were merged</param>
+    /// <exception cref="Exception">only in case of bugs</exception>
     private static void CombineAdjacentFor<T>(IEnumerable<long> points, Dictionary<long, T> lineToDraw, Action<T> remove) where T : IMergeableLine {
         Dictionary<long, HashSet<long>> nodeToLine = new();
         Dictionary<long, HashSet<long>> endNodeToLine = new();

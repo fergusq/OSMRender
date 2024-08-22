@@ -15,6 +15,9 @@
 
 namespace OSMRender.Rules;
 
+/// <summary>
+/// Represents the currently set property values.
+/// </summary>
 public class State {
     public IDictionary<string, string> Properties { get; set; }
 

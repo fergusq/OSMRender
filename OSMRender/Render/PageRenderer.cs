@@ -18,6 +18,9 @@ using VectSharp;
 
 namespace OSMRender.Render;
 
+/// <summary>
+/// A helper class instantiated by Renderer that represents a single tile or image being generated.
+/// </summary>
 public class PageRenderer {
 
     public Renderer Renderer { get; set; }
@@ -32,7 +35,7 @@ public class PageRenderer {
     public int TileWidth { get; set; }
     public int TileHeight { get; set; }
 
-    internal Logger Logger;
+    internal ILogger Logger;
 
     public Geo.Bounds TileBounds => Geo.Bounds.From(
         Renderer.TileNumberToLatitude(TileY + TileHeight),
@@ -41,7 +44,7 @@ public class PageRenderer {
         Renderer.TileNumberToLongitude(TileX + TileWidth)
     );
 
-    public PageRenderer(Renderer renderer, Page page, Logger logger, int tileX, int tileY, int tileWidth = 1, int tileHeight = 1) {
+    public PageRenderer(Renderer renderer, Page page, ILogger logger, int tileX, int tileY, int tileWidth = 1, int tileHeight = 1) {
         Renderer = renderer;
         Page = page;
         TileX = tileX;

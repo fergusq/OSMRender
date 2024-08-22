@@ -20,6 +20,9 @@ using OsmSharp.Tags;
 
 namespace OSMRender.Rules;
 
+/// <summary>
+/// A ruleset contains feature declarations and target rules. Its Apply method can be used to add draw commands to a GeoDocument.
+/// </summary>
 public class Ruleset {
     public interface IQuery {
         public bool Matches(GeoDocument doc, GeoObj obj);
@@ -46,9 +49,9 @@ public class Ruleset {
     public IDictionary<string, string> Properties { get; set; }
     public IList<IRule> Rules { get; set; }
 
-    private Logger Logger;
+    private readonly ILogger Logger;
 
-    public Ruleset(Logger logger) {
+    public Ruleset(ILogger logger) {
         PointFeatures = new Dictionary<string, IQuery>();
         LineFeatures = new Dictionary<string, IQuery>();
         AreaFeatures = new Dictionary<string, IQuery>();
@@ -57,6 +60,10 @@ public class Ruleset {
         Logger = logger;
     }
 
+    /// <summary>
+    /// Constructs the feature database and evaluates all rules for all features, adding draw commands for each evaluated draw statement to the GeoDocument object.
+    /// </summary>
+    /// <param name="doc">the GeoDocument for which the rules are evaluated and DrawCommands of which are modified</param>
     public void Apply(GeoDocument doc) {
         var features = new List<Feature>();
         foreach (var point in doc.Points) {

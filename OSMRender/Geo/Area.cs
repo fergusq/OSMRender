@@ -17,6 +17,9 @@ using OsmSharp.Tags;
 
 namespace OSMRender.Geo;
 
+/// <summary>
+/// An area is an OSM way or multipolygon relation. If it's a way, its first and last nodes must be the same.
+/// </summary>
 public class Area : GeoObj {
 
     public List<List<Point>> OuterEdges { get; set; }

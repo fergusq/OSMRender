@@ -15,6 +15,9 @@
 
 namespace OSMRender.Logging;
 
+/// <summary>
+/// A Logger that doesn't log anything.
+/// </summary>
 public class DummyLogger : Logger {
     protected override void DebugImpl(string message) {}
 

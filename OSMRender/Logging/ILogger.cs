@@ -1,4 +1,5 @@
 // This file is part of OSMRender.
+// Copyright (c) 2024 Iikka Hauhio
 //
 // OSMRender is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,22 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
 
-using OsmSharp.Tags;
-
-namespace OSMRender.Geo;
+namespace OSMRender.Logging;
 
 /// <summary>
-/// A GeoObj corresponding to an OSM node.
+/// A logger interface. The main purpose of this is to allow integrating OSMRender into applications that use different logging frameworks.
+/// Can be easily implemented using any framework.
 /// </summary>
-public class Point : GeoObj {
+public interface ILogger {
+    public void Debug(string message);
 
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
+    public void Error(string message);
 
-    public override Bounds Bounds => Bounds.FromPoint(Latitude, Longitude);
+    public void Info(string message);
 
-    public Point(long id, TagsCollectionBase tags, double lat, double lon) : base(id, tags) {
-        Latitude = lat;
-        Longitude = lon;
-    }
+    public void Warning(string message);
 }

@@ -15,6 +15,9 @@
 
 namespace OSMRender.Logging;
 
+/// <summary>
+/// A Logger that writes the log to a file.
+/// </summary>
 public class FileLogger : Logger {
 
     private readonly StreamWriter Writer;

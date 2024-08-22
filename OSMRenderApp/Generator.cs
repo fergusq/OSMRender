@@ -30,9 +30,9 @@ public class Generator {
         Pdf,
     }
 
-    private readonly Logger Logger;
+    private readonly ILogger Logger;
 
-    public Generator(Logger logger) {
+    public Generator(ILogger logger) {
         Logger = logger;
     }
 

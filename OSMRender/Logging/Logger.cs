@@ -15,7 +15,10 @@
 
 namespace OSMRender.Logging;
 
-public abstract class Logger : IDisposable {
+/// <summary>
+/// The base class for the implementations of ILogger used in the project.
+/// </summary>
+public abstract class Logger : ILogger, IDisposable {
 
     public LoggingLevel Level { get; set; } = LoggingLevel.Info;
 

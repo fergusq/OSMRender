@@ -30,7 +30,7 @@ public partial class Server {
     private HttpListener? Listener;
     private readonly GeoDocument Document;
     private readonly Bounds Bounds;
-    private readonly Logger Logger;
+    private readonly ILogger Logger;
     private readonly string IndexPage;
     private static readonly Regex TILE_URL_PATTERN = TileUrlPattern();
     private const string PAGE = """
@@ -64,7 +64,7 @@ L.tileLayer('{z}/{x}/{y}.<FILETYPE>', {
         Svg,
     }
 
-    public Server(GeoDocument doc, Bounds bounds, TileType type, Logger logger) {
+    public Server(GeoDocument doc, Bounds bounds, TileType type, ILogger logger) {
         Document = doc;
         Bounds = bounds;
         Logger = logger;

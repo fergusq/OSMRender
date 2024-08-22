@@ -21,12 +21,25 @@ using OSMRender.Render.Commands;
 
 namespace OSMRender.Rules;
 
+/// <summary>
+/// Parser for Maperitive rulesets
+/// </summary>
 public class Parser {
 
+    /// <summary>
+    /// Represents syntax errors present in Maperitive rulesets
+    /// </summary>
     public class SyntaxErrorException : Exception {
         internal SyntaxErrorException(string message) : base(message) {}
     }
 
+    /// <summary>
+    /// If the first item in the list is equal to any of the given alternatives, remove it from the list and return true, otherwise return false;
+    /// </summary>
+    /// <typeparam name="T">type of the tokens</typeparam>
+    /// <param name="tokens">list of tokens</param>
+    /// <param name="token">list of alternatives</param>
+    /// <returns>true if item was removed, false otherwise</returns>
     private static bool TryEat<T>(IList<T> tokens, params T[] token) where T : IEquatable<T> {
         if (tokens.Count > 0 && (token.Length == 0 || token.Any(t => tokens[0].Equals(t)))) {
             //Console.WriteLine($"Eating {tokens[0]}");
@@ -36,6 +49,14 @@ public class Parser {
         return false;
     }
 
+    /// <summary>
+    /// If the first item in the list is equal to any of the given alternatives, remove it from the list. Otherwise, throw a syntax error.
+    /// </summary>
+    /// <typeparam name="T">type of the tokens</typeparam>
+    /// <param name="tokens">list of tokens</param>
+    /// <param name="token">list of alternatives</param>
+    /// <returns>the item removed from the list</returns>
+    /// <exception cref="SyntaxErrorException">if the first item in the list is not any of the alternatives</exception>
     private static T Eat<T>(IList<T> tokens, params T[] token) where T : IEquatable<T> {
         if (tokens.Count > 0 && (token.Length == 0 || token.Any(t => tokens[0].Equals(t)))) {
             //Console.WriteLine($"Eating {tokens[0]}");
@@ -49,6 +70,11 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Returns a list of lines, removing comments and empty lines
+    /// </summary>
+    /// <param name="rules">the content of the rule file as a string</param>
+    /// <returns>list of lines</returns>
     private static List<string> ParseLines(string rules) {
         var lines = rules.Split("\n");
         var outLines = new List<string>();
@@ -91,7 +117,13 @@ public class Parser {
         return outLines;
     }
 
-    public static Ruleset ParseRules(string ruleString, Logger? logger = null) {
+    /// <summary>
+    /// Parses the given rules into a Ruleset object.
+    /// </summary>
+    /// <param name="ruleString">the content of the ruleset file as a string</param>
+    /// <param name="logger">logger instance (if null, a DummyLogger is created)</param>
+    /// <returns>the parsed Ruleset</returns>
+    public static Ruleset ParseRules(string ruleString, ILogger? logger = null) {
         logger ??= new DummyLogger();
         var lines = ParseLines(ruleString);
         var rules = new Ruleset(logger);
@@ -102,9 +134,9 @@ public class Parser {
 
     private readonly List<string> Lines;
     private readonly Ruleset Rules;
-    private readonly Logger Logger;
+    private readonly ILogger Logger;
 
-    private Parser(List<string> lines, Ruleset rules, Logger logger) {
+    private Parser(List<string> lines, Ruleset rules, ILogger logger) {
         Lines = lines;
         Rules = rules;
         Logger = logger;
@@ -132,10 +164,14 @@ public class Parser {
 
     private bool TryNextLine(out string line) {
         if (Lines.Count == 0) {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             line = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             return false;
         } else if (Lines[0] == "<indent>" || Lines[0] == "<deindent>") {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             line = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             return false;
         }
         line = Lines[0];
@@ -376,6 +412,10 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a tag query, i.e. either tag=value or @isAnyOf(tag, value1, value2).
+    /// If there are no values, TagExistQuery should be used instead.
+    /// </summary>
     private readonly struct TagQuery : Ruleset.IQuery {
         private readonly string Key;
         private readonly IEnumerable<string> Val;
@@ -391,6 +431,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents an existence query (a tag query without any values).
+    /// </summary>
     private readonly struct TagExistsQuery : Ruleset.IQuery {
         private readonly string Key;
 
@@ -404,6 +447,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a @isMulti query.
+    /// </summary>
     private readonly struct IsMultiQuery : Ruleset.IQuery {
         private readonly string Key;
         private readonly int Num;
@@ -419,6 +465,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents either an "A OR B" or "A AND B" query.
+    /// </summary>
     private readonly struct BoolOpQuery : Ruleset.IQuery {
         public enum Op {
             Or,
@@ -438,6 +487,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a node[] query.
+    /// </summary>
     private readonly struct IsNodeQuery : Ruleset.IQuery {
         private readonly Ruleset.IQuery? Subquery;
 
@@ -451,6 +503,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a line[] query.
+    /// </summary>
     private readonly struct IsLineQuery : Ruleset.IQuery {
         private readonly Ruleset.IQuery? Subquery;
 
@@ -464,6 +519,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a area[] query.
+    /// </summary>
     private readonly struct IsAreaQuery : Ruleset.IQuery {
         private readonly Ruleset.IQuery? Subquery;
 
@@ -477,6 +535,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a relation[] query.
+    /// </summary>
     private readonly struct IsRelationQuery : Ruleset.IQuery {
         private readonly Ruleset.IQuery? Subquery;
 
@@ -490,6 +551,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a "NOT A" query.
+    /// </summary>
     private readonly struct NotQuery : Ruleset.IQuery {
         private readonly Ruleset.IQuery Subquery;
 
@@ -503,6 +567,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a query that always fails. Used for unimplemented query types.
+    /// </summary>
     private readonly struct NullQuery : Ruleset.IQuery {
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
@@ -544,13 +611,17 @@ public class Parser {
 
     private bool TryParseStatementWithArg(string expectedKey, out string value) {
         if (Lines.Count == 0 || !Lines[0].Contains(':')) {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             value = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             return false;
         }
         var key = Lines[0][..Lines[0].IndexOf(':')].Trim();
         var val = Lines[0][(Lines[0].IndexOf(':')+1)..].Trim();
         if (key != expectedKey) {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             value = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             return false;
         }
         Lines.RemoveAt(0);
@@ -639,16 +710,25 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a condition of an if statement (typuically RegexCondition) or a for statement (typically a QueryCondition).
+    /// </summary>
     private interface ICondition {
         public bool Matches(GeoDocument doc, Ruleset.Feature feature);
     }
 
+    /// <summary>
+    /// A condition that always succeeds (used for $featuretype(any)).
+    /// </summary>
     private readonly struct TrueCondition : ICondition {
         public bool Matches(GeoDocument doc, Ruleset.Feature feature) {
             return true;
         }
     }
 
+    /// <summary>
+    /// A condition that matches the feature name against a regular expession.
+    /// </summary>
     private readonly struct RegexCondition : ICondition {
         private readonly Regex Regex;
 
@@ -661,6 +741,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// A condition that tests the feature object against a query.
+    /// </summary>
     private readonly struct QueryCondition : ICondition {
         private readonly Ruleset.IQuery Query;
 
@@ -673,10 +756,16 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a statement (if, for, draw, etc.)
+    /// </summary>
     private interface IStatement {
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state);
     }
 
+    /// <summary>
+    /// The define statement alters the state by setting properties.
+    /// </summary>
     private readonly struct DefineStatement : IStatement {
         private readonly IDictionary<string, string> Properties;
 
@@ -689,6 +778,9 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// The if statement executes one of its branches based on conditions, or the else statements if no branches were evaluated.
+    /// </summary>
     private readonly struct IfStatement : IStatement {
         private readonly IEnumerable<(ICondition, IEnumerable<IStatement>)> Branches;
         private readonly IEnumerable<IStatement> ElseStatements;
@@ -714,8 +806,14 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Used to exit a target. The target rule will catch this exception.
+    /// </summary>
     private class StopException : Exception {}
 
+    /// <summary>
+    /// A statement that exists the target by throwing a StopException.
+    /// </summary>
     private readonly struct StopStatement : IStatement {
 
         public StopStatement() {}
@@ -725,12 +823,17 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// The draw statement adds a new draw command to the GeoDocument with the currently defined properties.
+    /// Draw commands are evaluated based on their importance, which is based on the location of the draw command in the file.
+    /// Commands higher in the file are evaluated after commands lowed in the file (i.e. commands higher will be drawn on top of commands lower).
+    /// </summary>
     private readonly struct DrawStatement : IStatement {
         private readonly string Type;
         private readonly int Importance;
-        private readonly Logger Logger;
+        private readonly ILogger Logger;
 
-        public DrawStatement(string type, int importance, Logger logger) {
+        public DrawStatement(string type, int importance, ILogger logger) {
             Type = type;
             Importance = importance;
             Logger = logger;
@@ -770,13 +873,16 @@ public class Parser {
         }
     }
 
+    /// <summary>
+    /// Represents a target declaration. A rule has a condition specified after the "target:" keyword and a list of statements.
+    /// </summary>
     private readonly struct Rule : Ruleset.IRule
     {
         private readonly ICondition Condition;
         private readonly IEnumerable<IStatement> Statements;
-        private readonly Logger Logger;
+        private readonly ILogger Logger;
 
-        public Rule(ICondition cond, IEnumerable<IStatement> statements, Logger logger) {
+        public Rule(ICondition cond, IEnumerable<IStatement> statements, ILogger logger) {
             Condition = cond;
             Statements = statements;
             Logger = logger;

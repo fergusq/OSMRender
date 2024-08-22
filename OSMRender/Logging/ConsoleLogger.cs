@@ -15,6 +15,9 @@
 
 namespace OSMRender.Logging;
 
+/// <summary>
+/// A Logger that outputs everything to Console.
+/// </summary>
 public class ConsoleLogger : Logger {
 
     protected override void DebugImpl(string message) {

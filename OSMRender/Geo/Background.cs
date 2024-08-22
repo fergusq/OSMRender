@@ -17,6 +17,9 @@ using OsmSharp.Tags;
 
 namespace OSMRender.Geo;
 
+/// <summary>
+/// Represents the background color of the map.
+/// </summary>
 public class Background : GeoObj {
 
     public override Bounds Bounds { get; }

@@ -23,9 +23,9 @@ namespace OSMRenderApp;
 
 public class Reader {
 
-    private readonly Logger Logger;
+    private readonly ILogger Logger;
 
-    public Reader(Logger logger) {
+    public Reader(ILogger logger) {
         Logger = logger;
     }
 

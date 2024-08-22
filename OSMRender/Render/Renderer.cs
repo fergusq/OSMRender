@@ -20,9 +20,12 @@ using VectSharp;
 
 namespace OSMRender.Render;
 
+/// <summary>
+/// Renderer is used for rendering tiles on a specified zoom level.
+/// </summary>
 public class Renderer {
 
-    public Geo.Bounds Bounds { get; set; }
+    public Bounds Bounds { get; set; }
 
     public int MinTileX { get; set; }
     public int MinTileY { get; set; }
@@ -31,9 +34,9 @@ public class Renderer {
 
     public int ZoomLevel { get; set; }
 
-    private readonly Logger Logger;
+    private readonly ILogger Logger;
 
-    public Renderer(Geo.Bounds bounds, int zoomLevel, Logger logger) {
+    public Renderer(Bounds bounds, int zoomLevel, ILogger logger) {
         Bounds = bounds;
         ZoomLevel = zoomLevel;
         Logger = logger;
@@ -68,6 +71,12 @@ public class Renderer {
         return lat_rad * 180.0 / Math.PI;
     }
 
+    /// <summary>
+    /// Renders a tileset or a single image containing the specified tile range.
+    /// </summary>
+    /// <param name="doc">the GeoDocument to be renderer that contains the draw commands</param>
+    /// <param name="tiled">true if multiple tiles are being renderer, false if only a single image is rendered containing all tiles</param>
+    /// <returns>a dictionary from (tileX, tileY) to rendered tiles; if tiled is false, contains only a single rendered image</returns>
     public Dictionary<(int, int), Page> Render(GeoDocument doc, bool tiled = true)
     {
         Logger.Debug($"Drawing tiles {MinTileX}..{MaxTileX} / {MinTileY}..{MaxTileY}");
@@ -111,6 +120,13 @@ public class Renderer {
         return pages;
     }
 
+    /// <summary>
+    /// Renders a single tile at the specified coordinates.
+    /// </summary>
+    /// <param name="doc">the GeoDocument to be renderer that contains the draw commands</param>
+    /// <param name="x">the tile x coordinate</param>
+    /// <param name="y">the tile y coordinate</param>
+    /// <returns>the rendered tile</returns>
     public Page RenderTile(GeoDocument doc, int x, int y) {
         Dictionary<int, List<DrawCommand>> layers = GetLayers(doc);
         RenderPage(layers, x, y, out Page page, out bool empty);

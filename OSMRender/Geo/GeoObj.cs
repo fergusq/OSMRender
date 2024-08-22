@@ -17,6 +17,9 @@ using OsmSharp.Tags;
 
 namespace OSMRender.Geo;
 
+/// <summary>
+/// Represents a point (node), line (way), area (way/relation), or the background of the map.
+/// </summary>
 public abstract class GeoObj {
     public long Id { get; set; }
 

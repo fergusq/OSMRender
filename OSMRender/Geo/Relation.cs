@@ -17,6 +17,9 @@ using OsmSharp.Tags;
 
 namespace OSMRender.Geo;
 
+/// <summary>
+/// A GeoObj corresponding to an OSM relation.
+/// </summary>
 public class Relation : GeoObj {
 
     public struct Member {

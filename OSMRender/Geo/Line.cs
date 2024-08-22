@@ -17,6 +17,9 @@ using OsmSharp.Tags;
 
 namespace OSMRender.Geo;
 
+/// <summary>
+/// A GeoObj corresponding to an OSM way.
+/// </summary>
 public class Line : GeoObj, IMergeableLine {
 
     public List<Point> Nodes { get; set; }

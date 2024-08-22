@@ -15,6 +15,9 @@
 
 namespace OSMRender.Geo;
 
+/// <summary>
+/// A rectangle used for measuring bounds of GeoObjs and sets of them.
+/// </summary>
 public readonly struct Bounds {
     public readonly double MinLatitude;
     public readonly double MaxLatitude;
