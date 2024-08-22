@@ -39,20 +39,20 @@ features
 		amenity fast_food : amenity=fast_food
 		aerodrome : aeroway=aerodrome
 		housenumber : [addr:housenumber]
-		diy : shop=doityourself
-		hair dresser : shop=hairdresser
-		supermarket : shop=supermarket OR shop=food
-		convenience : shop=convenience
-		bakery : shop=bakery
-		alchohol : shop=alcohol
-		books : shop=books
-		car : shop=car
-		chemist : shop=chemist
-		clothes : shop=clothes
-		electronics : shop=electronics
+		shop diy : shop=doityourself
+		shop hair dresser : shop=hairdresser
+		shop supermarket : shop=supermarket OR shop=food
+		shop convenience : shop=convenience
+		shop bakery : shop=bakery
+		shop alchohol : shop=alcohol
+		shop books : shop=books
+		shop car : shop=car
+		shop chemist : shop=chemist
+		shop clothes : shop=clothes
+		shop electronics : shop=electronics
 		fuel : amenity=fuel
-		furniture : shop=furniture
-		gift : shop=gift
+		shop furniture : shop=furniture
+		shop gift : shop=gift
 		pharmacy : amenity=pharmacy
 		restaurant : amenity=restaurant
 		cafe : amenity=cafe
@@ -65,7 +65,7 @@ features
 
 	areas
 		beach : natural=beach
-		building : building=yes
+		building : building
 		water : natural=water OR waterway=riverbank OR landuse=reservoir OR landuse=basin or waterway=dock
 		village green : landuse=village_green
 		forest : landuse=forest OR natural=wood
@@ -397,7 +397,10 @@ rules
 		define
 			line-style : none
 			line-width : 1
-		if : forest
+		if : building
+			define
+				fill-color : #BCA9A9
+		elseif : forest
 			define
 				min-zoom : 9
 				fill-color : #8DC56C
@@ -419,7 +422,7 @@ rules
 		elseif : water
 			define
 				fill-color : #B5D0D0
-		elseif:academic
+		elseif : academic
 			define
 				fill-color : #F0F0D8
 				line-color : #E5D2CC
@@ -451,9 +454,6 @@ rules
 		elseif : graveyard
 			define
 				fill-color : #A9CAAE
-		elseif : building
-			define
-				fill-color : #BCA9A9
 		elseif : leisure pitch
 			define
 				fill-color : #89D2AE
@@ -523,14 +523,17 @@ rules
 					line-style : solid
 		else
 			stop
-		draw : fill
+		// Buildings will be drawn on top of other things by having the draw command be before
 		if : building
+			draw : fill
 			define
 				min-zoom : 15
 				line-style : solid
 				line-width : 1
 				line-color : #666
 			draw : line
+		else
+			draw : fill
 		for : amenity=hospital
 			stop
 		define
@@ -1302,7 +1305,7 @@ rules
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: supermarket
+	target: shop supermarket
 		define
 			min-zoom : 18
 			text-color : #734a08
@@ -1314,13 +1317,13 @@ rules
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: diy
+	target: shop diy
 		define
 			icon-image : icons/SJJB/png/shopping_diy.p.32.png
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: convenience
+	target: shop convenience
 		define
 			min-zoom : 18
 			text-color : #734a08
@@ -1388,7 +1391,7 @@ rules
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: hair dresser
+	target: shop hair dresser
 		define
 			icon-image : icons/SJJB/png/shopping_hairdresser.p.32.png
 			min-zoom : 16
@@ -1419,7 +1422,7 @@ rules
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: bakery
+	target: shop bakery
 		define
 			min-zoom : 18
 			text-color : #2B80FE
@@ -1448,7 +1451,7 @@ rules
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: books
+	target: shop books
 		define
 			min-zoom : 18
 			text-color : #734a08
@@ -1460,7 +1463,7 @@ rules
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: car
+	target: shop car
 		define
 			min-zoom : 18
 			text-color : #734a08
@@ -1472,7 +1475,7 @@ rules
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: clothes
+	target: shop clothes
 		define
 			min-zoom : 18
 			text-color : #734a08
@@ -1484,14 +1487,14 @@ rules
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: chemist
+	target: shop chemist
 		define
 			min-zoom : 18
 			text-color : #734a08
 			text-offset-vertical : 150%
 			font-size : 10
 		draw : text
-	target: electronics
+	target: shop electronics
 		define
 			min-zoom : 18
 			text-color : #734a08
@@ -1515,14 +1518,14 @@ rules
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
-	target: furniture
+	target: shop furniture
 		define
 			min-zoom : 18
 			text-color : #734a08
 			text-offset-vertical : 150%
 			font-size : 10
 		draw : text
-	target: gift
+	target: shop gift
 		define
 			min-zoom : 18
 			text-color : #734a08
@@ -1536,10 +1539,11 @@ rules
 		draw : icon
 	target: tree
 		define
-			icon-image : http://svn.openstreetmap.org/applications/rendering/mapnik/symbols/tree2.png
 			min-zoom : 16
-			icon-width : 6
-		draw : icon
+			shape : circle
+			shape-size : 6
+			fill-color : lightgreen
+		draw : shape
 	target: memorial
 		define
 			icon-image : icons/SJJB/png/tourist_memorial.p.32.png
