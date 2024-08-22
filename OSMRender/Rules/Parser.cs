@@ -580,7 +580,7 @@ public class Parser {
         } else if (cond.StartsWith("$")) {
             throw new SyntaxErrorException($"Invalid target: `{cond}'");
         } else {
-            cond = cond.Replace("*", ".*"); // TODO purkkaa!
+            cond = "^" + cond.Replace("*", ".*") + "$"; // TODO purkkaa!
             return new RegexCondition(new Regex(cond));
         }
     }
@@ -737,7 +737,7 @@ public class Parser {
         }
 
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state) {
-            Logger.Debug($"Drawing {feature.Name} {feature.Obj.Id} as {Type} with {string.Join(", ", state.Properties.Select(p => p.Key + "=" + p.Value))}");
+            Logger.Debug($"Drawing {feature.Name} {feature.Obj.Id} as {Type} with Importance={Importance}, {string.Join(", ", state.Properties.Select(p => p.Key + "=" + p.Value))}");
             switch (Type) {
             case "fill":
                 if (feature.Obj is not Area) {
