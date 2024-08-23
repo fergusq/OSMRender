@@ -49,7 +49,9 @@ public class GeoDocument {
     /// Combines adjacent LineDrawsCommands (i.e. roads, shapes) into single line draws. The ruleset will call this method.
     /// </summary>
     internal void CombineAdjacentLineDraws() {
-        foreach (var feature in DrawCommands.Select(c => c.Feature).ToHashSet()) {
+        HashSet<string> features = new();
+        DrawCommands.Select(c => c.Feature).ToList().ForEach(f => features.Add(f));
+        foreach (var feature in features) {
             Dictionary<long, LineDrawCommand> lineToDraw = new();
             DrawCommands
                 .Where(c => c.Feature == feature && c is LineDrawCommand d && d.Nodes.Count > 0)
