@@ -406,7 +406,7 @@ public class Parser {
                     // TODO purkkaa
                     val = val.Substring(1, val.Length-2);
                 }
-                return new TagQuery(tag, new string[] { val });
+                return new TagQuery(tag, [val]);
             } else {
                 return new TagExistsQuery(tag);
             }
@@ -686,7 +686,7 @@ public class Parser {
                 var query = ParseQueryCode(val);
                 var stmts = ParseStatements();
                 return new IfStatement(
-                    new (ICondition, IEnumerable<IStatement>)[] { (new QueryCondition(query), stmts) },
+                    [(new QueryCondition(query), stmts)],
                     Array.Empty<IStatement>()
                 );
             } else if (key == "if") {

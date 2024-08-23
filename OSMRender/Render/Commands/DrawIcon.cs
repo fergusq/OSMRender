@@ -22,7 +22,7 @@ namespace OSMRender.Render.Commands;
 
 public class DrawIcon : DrawCommand {
 
-    private static Dictionary<string, RasterImage> ImageCache = new();
+    private static Dictionary<string, RasterImage> ImageCache = [];
     public static string SearchPath { get; set; } = "";
     
     public DrawIcon(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : base(properties, importance, feature, obj) {
@@ -78,7 +78,7 @@ public class DrawIcon : DrawCommand {
     }
 
     public override IEnumerable<int> GetLayers() {
-        return new int[] { Layer };
+        return [Layer];
     }
 
     private int Layer => GetLayerCode(

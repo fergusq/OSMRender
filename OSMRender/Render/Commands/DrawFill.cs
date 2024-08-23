@@ -29,7 +29,7 @@ public class DrawFill : DrawCommand {
     public override void Draw(PageRenderer renderer, int layer) {
         // Areas are all drawn in layer 0
         if (layer == Layer) {
-            List<GraphicsPath> paths = new();
+            List<GraphicsPath> paths = [];
 
             // Draw outer edges as separate polygons if there are no inner edges
             if (Area.InnerEdges.Count == 0) {
@@ -54,7 +54,7 @@ public class DrawFill : DrawCommand {
     }
 
     public override IEnumerable<int> GetLayers() {
-        return new int[] { Layer };
+        return [Layer];
     }
 
     private int Layer => GetLayerCode(

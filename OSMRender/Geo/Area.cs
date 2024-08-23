@@ -31,8 +31,8 @@ public class Area : GeoObj {
     public double MeanLongitude => OuterEdges.SelectMany(e => e).Select(p => p.Longitude).Sum() / OuterEdges.SelectMany(e => e).Count();
 
     public Area(long id, IDictionary<string, string> tags) : base(id, tags) {
-        OuterEdges = new();
-        InnerEdges = new();
+        OuterEdges = [];
+        InnerEdges = [];
     }
 
     public IEnumerable<Point> CalculateEdge() {

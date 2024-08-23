@@ -20,7 +20,7 @@ namespace OSMRender.Render.Commands;
 
 public abstract class LineDrawCommand : DrawCommand, IMergeableLine {
 
-    public List<Point> Nodes { get; } = new();
+    public List<Point> Nodes { get; } = [];
 
     public long MergeableLineId => Obj.Id;
 

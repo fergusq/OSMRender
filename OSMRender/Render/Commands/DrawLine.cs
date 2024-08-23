@@ -42,7 +42,7 @@ public class DrawLine : DrawCommand {
     }
 
     public override IEnumerable<int> GetLayers() {
-        return new int[] { StrokeLayer, FillLayer };
+        return [StrokeLayer, FillLayer];
     }
 
     private int StrokeLayer => GetLayerCode(

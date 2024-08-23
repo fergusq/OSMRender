@@ -107,7 +107,7 @@ public class DrawText : LineDrawCommand {
     }
 
     public override IEnumerable<int> GetLayers() {
-        return new int[] { Layer };
+        return [Layer];
     }
 
     private int Layer => GetLayerCode(

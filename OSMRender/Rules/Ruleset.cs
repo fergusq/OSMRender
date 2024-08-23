@@ -56,7 +56,7 @@ public class Ruleset {
         LineFeatures = new Dictionary<string, IQuery>();
         AreaFeatures = new Dictionary<string, IQuery>();
         Properties = new Dictionary<string, string>();
-        Rules = new List<IRule>();
+        Rules = [];
         Logger = logger;
     }
 

@@ -24,8 +24,8 @@ namespace OSMRender.Geo
         /// <exception cref="Exception">only in case of bugs</exception>
         public static void CombineAdjacentFor<T>(IEnumerable<long> points, Dictionary<long, T> lineToDraw, Action<T> remove) where T : IMergeableLine
         {
-            Dictionary<long, HashSet<long>> nodeToLine = new();
-            Dictionary<long, HashSet<long>> endNodeToLine = new();
+            Dictionary<long, HashSet<long>> nodeToLine = [];
+            Dictionary<long, HashSet<long>> endNodeToLine = [];
             foreach (var drawCmd in lineToDraw.Values)
             {
                 if (drawCmd.Nodes.Count >= 2)
@@ -34,7 +34,7 @@ namespace OSMRender.Geo
                     {
                         if (!nodeToLine.ContainsKey(node.Id))
                         {
-                            nodeToLine[node.Id] = new();
+                            nodeToLine[node.Id] = [];
                         }
                         nodeToLine[node.Id].Add(drawCmd.MergeableLineId);
                     }
@@ -45,7 +45,7 @@ namespace OSMRender.Geo
                     {
                         if (!endNodeToLine.ContainsKey(node))
                         {
-                            endNodeToLine[node] = new();
+                            endNodeToLine[node] = [];
                         }
                         endNodeToLine[node].Add(drawCmd.MergeableLineId);
                     }
@@ -72,7 +72,7 @@ namespace OSMRender.Geo
                 foreach (var endNode in endNodeToRef[node])
                 {
                     var tags = lineToDraw[endNode.LineId].MergeableLineProperties;
-                    List<long> matchingLines = new();
+                    List<long> matchingLines = [];
                     foreach (var endNode2 in endNodeToRef[node])
                     {
                         if (endNode2.LineId == endNode.LineId) continue;

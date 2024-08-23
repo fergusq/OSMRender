@@ -82,7 +82,7 @@ public class Renderer {
     {
         Logger.Debug($"Drawing tiles {MinTileX}..{MaxTileX} / {MinTileY}..{MaxTileY}");
         Dictionary<int, List<DrawCommand>> layers = GetLayers(doc);
-        Dictionary<(int, int), Page> pages = new();
+        Dictionary<(int, int), Page> pages = [];
         if (tiled)
         {
             for (int x = MinTileX; x <= MaxTileX; x++)
@@ -136,7 +136,7 @@ public class Renderer {
 
     private Dictionary<int, List<DrawCommand>> GetLayers(GeoDocument doc)
     {
-        Dictionary<int, List<DrawCommand>> layers = new();
+        Dictionary<int, List<DrawCommand>> layers = [];
         foreach (var cmd in doc.DrawCommands)
         {
             if (ZoomLevel < cmd.MinZoom || ZoomLevel > cmd.MaxZoom)
@@ -147,7 +147,7 @@ public class Renderer {
             {
                 if (!layers.ContainsKey(layer))
                 {
-                    layers[layer] = new List<DrawCommand>();
+                    layers[layer] = [];
                 }
 
                 layers[layer].Add(cmd);

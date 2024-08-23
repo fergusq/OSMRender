@@ -30,6 +30,6 @@ public class Line : GeoObj, IMergeableLine {
     public override Bounds Bounds => Nodes.Select(n => n.Bounds).Aggregate((a, b) => a.MergeWith(b));
 
     public Line(long id, IDictionary<string, string> tags) : base(id, tags) {
-        Nodes = new List<Point>();
+        Nodes = [];
     }
 }

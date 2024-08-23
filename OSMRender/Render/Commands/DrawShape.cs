@@ -31,7 +31,7 @@ public class DrawShape : LineDrawCommand {
     public override void Draw(PageRenderer renderer, int layer) {
         if (layer != Layer) return;
 
-        List<GraphicsPath> paths = new();
+        List<GraphicsPath> paths = [];
         Colour fillColour = GetColour("fill-color", "fill-opacity");
         Colour pathColour = GetColour("border-color", "border-opacity", defaultColour: GetColour("line-color", "line-opacity", defaultColour: fillColour));
         double pathWidth = 1.0;
@@ -151,7 +151,7 @@ public class DrawShape : LineDrawCommand {
     }
 
     public override IEnumerable<int> GetLayers() {
-        return new int[] { Layer };
+        return [Layer];
     }
 
     private int Layer => GetLayerCode(

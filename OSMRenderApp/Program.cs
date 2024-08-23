@@ -74,11 +74,11 @@ Reader reader = new(logger);
 
 DrawIcon.SearchPath = Path.GetDirectoryName(rulesetPath) ?? "";
 var rules = reader.ReadRules(rulesetPath);
-var (doc, bounds) = reader.ReadOSM(inputPath);
+var doc = reader.ReadOSM(inputPath);
 rules.Apply(doc);
 
 if (server) {
-    var httpServer = new Server(doc, bounds, outputType == "svgtiles" ? Server.TileType.Svg : Server.TileType.Png, logger);
+    var httpServer = new Server(doc, doc.Bounds, outputType == "svgtiles" ? Server.TileType.Svg : Server.TileType.Png, logger);
     httpServer.StartServer($"http://localhost:{port}/");
 } else {
     Generator generator = new(logger);
@@ -93,8 +93,8 @@ if (server) {
     };
 
     if (outputType == "pngtiles" || outputType == "svgtiles") {
-        generator.GenerateTiles(doc, bounds, minZoom, maxZoom, type, outputPath);
+        generator.GenerateTiles(doc, doc.Bounds, minZoom, maxZoom, type, outputPath);
     } else {
-        generator.GenerateImages(doc, bounds, minZoom, maxZoom, type, outputPath);
+        generator.GenerateImages(doc, doc.Bounds, minZoom, maxZoom, type, outputPath);
     }
 }

@@ -40,7 +40,7 @@ public class DrawBackground : DrawCommand {
     }
 
     public override IEnumerable<int> GetLayers() {
-        return new int[] { Layer };
+        return [Layer];
     }
 
     private int Layer => GetLayerCode(

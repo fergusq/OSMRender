@@ -30,9 +30,11 @@ public class GeoDocument {
     public IDictionary<long, Relation> Relations { get; set; }
     public IList<DrawCommand> DrawCommands { get; set; }
 
-    public Bounds Bounds => Points.Select(p => p.Value.Bounds).Aggregate((a, b) => a.MergeWith(b));
+    private readonly Bounds? DocumentBounds;
 
-    public GeoDocument(Dictionary<long, Point> points, Dictionary<long, Area> areas, Dictionary<long, Line> lines, Dictionary<long, Relation> relations) {
+    public Bounds Bounds => DocumentBounds ?? Points.Select(p => p.Value.Bounds).Aggregate((a, b) => a.MergeWith(b));
+
+    public GeoDocument(Dictionary<long, Point> points, Dictionary<long, Area> areas, Dictionary<long, Line> lines, Dictionary<long, Relation> relations, Bounds? bounds = null) {
         
         // Combines adjacent lines that have the same properties (e.g. adjacent road segments that have the same name) into a single line.
         // This is an important postprocessing step that must be done for OSM data.
@@ -42,17 +44,18 @@ public class GeoDocument {
         Areas = areas;
         Lines = lines;
         Relations = relations;
-        DrawCommands = new List<DrawCommand>();
+        DrawCommands = [];
+        DocumentBounds = bounds;
     }
 
     /// <summary>
     /// Combines adjacent LineDrawsCommands (i.e. roads, shapes) into single line draws. The ruleset will call this method.
     /// </summary>
     internal void CombineAdjacentLineDraws() {
-        HashSet<string> features = new();
+        HashSet<string> features = [];
         DrawCommands.Select(c => c.Feature).ToList().ForEach(f => features.Add(f));
         foreach (var feature in features) {
-            Dictionary<long, LineDrawCommand> lineToDraw = new();
+            Dictionary<long, LineDrawCommand> lineToDraw = [];
             DrawCommands
                 .Where(c => c.Feature == feature && c is LineDrawCommand d && d.Nodes.Count > 0)
                 .Select(c => (LineDrawCommand) c)

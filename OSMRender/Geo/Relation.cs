@@ -31,6 +31,6 @@ public class Relation : GeoObj {
     public override Bounds Bounds => Members.Select(n => n.Value.Bounds).Aggregate((a, b) => a.MergeWith(b));
 
     public Relation(long id, IDictionary<string, string> tags) : base(id, tags) {
-        Members = new List<Member>();
+        Members = [];
     }
 }
