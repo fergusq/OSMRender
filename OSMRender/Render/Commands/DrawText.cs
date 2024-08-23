@@ -76,7 +76,7 @@ public class DrawText : LineDrawCommand {
         var halo = GetNum("text-halo-width", renderer.Renderer.ZoomLevel, 1f);
         var haloColour = GetColour("text-halo-color", "text-halo-opacity", defaultColour: Colours.White);
         if (Obj is Line && Nodes.Count >= 2) {
-            var nodes = Nodes[0].Longitude < Nodes[^1].Longitude ? Nodes : Nodes.AsEnumerable().Reverse();
+            var nodes = Nodes[0].Longitude < Nodes.Last().Longitude ? Nodes : Nodes.AsEnumerable().Reverse();
             GraphicsPath path = new();
             foreach (var node in nodes) {
                 path.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));

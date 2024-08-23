@@ -38,16 +38,16 @@ public class DrawShape : LineDrawCommand {
         GraphicsPath path = new();
         var shape = GetString("shape");
         if (shape == "custom") {
-            var def = Properties["shape-def"].Replace(" ", "").Split(";");
+            var def = Properties["shape-def"].Replace(" ", "").Split(';');
             foreach (var command in def) {
                 if (command.StartsWith("p:")) {
-                    pathColour = Colour.FromCSSString(command[2..]) ?? pathColour;
+                    pathColour = Colour.FromCSSString(command.Substring(2)) ?? pathColour;
                 } else if (command.StartsWith("f:")) {
-                    fillColour = Colour.FromCSSString(command[2..]) ?? fillColour;
+                    fillColour = Colour.FromCSSString(command.Substring(2)) ?? fillColour;
                 } else if (command.StartsWith("pw:")) {
-                    pathWidth = double.Parse(command[3..], CultureInfo.InvariantCulture);
+                    pathWidth = double.Parse(command.Substring(3), CultureInfo.InvariantCulture);
                 } else if (command.StartsWith("a:")) {
-                    var points = command[2..].Split(",");
+                    var points = command.Substring(2).Split(',');
                     var x = double.Parse(points[0], CultureInfo.InvariantCulture);
                     var y = double.Parse(points[1], CultureInfo.InvariantCulture);
                     var dx = double.Parse(points[2], CultureInfo.InvariantCulture);
@@ -58,7 +58,7 @@ public class DrawShape : LineDrawCommand {
                     paths.Add(path);
                     path = new();
                 } else if (command.StartsWith("m:")) {
-                    var points = command[2..].Split(",");
+                    var points = command.Substring(2).Split(',');
                     if (points.Length%2 != 0) {
                         throw new Exception("odd number of coordinates");
                     }
@@ -68,7 +68,7 @@ public class DrawShape : LineDrawCommand {
                         path.MoveTo(x, y);
                     }
                 } else {
-                    var points = command.StartsWith("l:") ? command[2..].Split(",") : command.Split(",");
+                    var points = command.StartsWith("l:") ? command.Substring(2).Split(',') : command.Split(',');
                     if (points.Length%2 != 0) {
                         throw new Exception("odd number of coordinates");
                     }

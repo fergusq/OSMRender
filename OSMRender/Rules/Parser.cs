@@ -77,7 +77,7 @@ public class Parser {
     /// <param name="rules">the content of the rule file as a string</param>
     /// <returns>list of lines</returns>
     private static List<string> ParseLines(string rules) {
-        var lines = rules.Split("\n");
+        var lines = rules.Split('\n');
         var outLines = new List<string>();
         var prevIndent = 0;
         var indentLevel = new List<int>() { 0 };
@@ -86,7 +86,7 @@ public class Parser {
             var indent = 0;
             while (lineTrimmed.StartsWith("\t")) {
                 indent++;
-                lineTrimmed = lineTrimmed[1..];
+                lineTrimmed = lineTrimmed.Substring(1);
             }
             lineTrimmed = lineTrimmed.TrimStart();
 
@@ -102,7 +102,7 @@ public class Parser {
                 outLines.Add("<indent>");
                 indentLevel.Add(indent);
             } else if (indent < prevIndent) {
-                while (indentLevel[^1] > indent) {
+                while (indentLevel.Last() > indent) {
                     outLines.Add("<deindent>");
                     indentLevel.RemoveAt(indentLevel.Count-1);
                 }
@@ -185,14 +185,14 @@ public class Parser {
         var ans = new List<string>();
         var regex = new Regex(pattern);
         var pos = 0;
-        while (regex.IsMatch(code[pos..])) {
-            var match = regex.Match(code[pos..]);
+        while (regex.IsMatch(code.Substring(pos))) {
+            var match = regex.Match(code.Substring(pos));
             ans.Add(match.Value);
             //Console.WriteLine($"Tokenized `{pattern}' `{match.Value}'");
             pos += match.Length;
         }
         if (pos != code.Length) {
-            throw new SyntaxErrorException("cannot tokenize `" + code[pos..] + "'");
+            throw new SyntaxErrorException("cannot tokenize `" + code.Substring(pos) + "'");
         }
         return ans;
     }
@@ -228,7 +228,7 @@ public class Parser {
     }
 
     private void ParseFeatureSet() {
-        var featureTypes = NextLine().Split(",").Select(f => f.Trim());
+        var featureTypes = NextLine().Split(',').Select(f => f.Trim());
         if (!featureTypes.All(f => f == "points" || f == "areas" || f == "lines")) {
             throw new SyntaxErrorException("Unknown feature type: " + string.Join(", ", featureTypes));
         }
@@ -246,8 +246,8 @@ public class Parser {
         }
 
         var colon = line.IndexOf(':');
-        var name = line[..colon].Trim();
-        var queryCode = line[(colon + 1)..].Trim();
+        var name = line.Substring(0, colon).Trim();
+        var queryCode = line.Substring(colon+1).Trim();
         var query = ParseQueryCode(queryCode);
 
         foreach (var type in featureTypes) {
@@ -404,7 +404,7 @@ public class Parser {
                 var val = Eat(tokens);
                 if (val.StartsWith("\"") && val.EndsWith("\"")) {
                     // TODO purkkaa
-                    val = val[1..^1];
+                    val = val.Substring(1, val.Length-2);
                 }
                 return new TagQuery(tag, new string[] { val });
             } else {
@@ -585,8 +585,8 @@ public class Parser {
                 throw new SyntaxErrorException($"Invalid property `{line}', missing `:'");
             }
 
-            var key = line[..line.IndexOf(':')].Trim();
-            var value = line[(line.IndexOf(':')+1)..].Trim();
+            var key = line.Substring(0, line.IndexOf(':')).Trim();
+            var value = line.Substring(line.IndexOf(':')+1).Trim();
             ans[key] = value;
         }
         return ans;
@@ -597,8 +597,8 @@ public class Parser {
         if (!line.Contains(':')) {
             throw new SyntaxErrorException($"Invalid statement `{line}', missing `:'");
         }
-        var key = line[..line.IndexOf(':')].Trim();
-        var val = line[(line.IndexOf(':')+1)..].Trim();
+        var key = line.Substring(0, line.IndexOf(':')).Trim();
+        var val = line.Substring(line.IndexOf(':') + 1).Trim();
         return (key, val);
     }
 
@@ -617,8 +617,8 @@ public class Parser {
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             return false;
         }
-        var key = Lines[0][..Lines[0].IndexOf(':')].Trim();
-        var val = Lines[0][(Lines[0].IndexOf(':')+1)..].Trim();
+        var key = Lines[0].Substring(0, Lines[0].IndexOf(':')).Trim();
+        var val = Lines[0].Substring(Lines[0].IndexOf(':') + 1).Trim();
         if (key != expectedKey) {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             value = null;
@@ -647,7 +647,8 @@ public class Parser {
         } else if (cond == "$featuretype(any)") {
             return new TrueCondition();
         } else if (cond.StartsWith("$regex(\"") && cond.EndsWith("\")")) { // TODO purkkaa!
-            var pattern = cond["$regex(\"".Length..^2];
+            var pattern = cond.Substring("$regex(\"".Length);
+            pattern = pattern.Substring(0, pattern.Length - 2);
             return new RegexCondition(new Regex(pattern));
         } else if (cond.StartsWith("$")) {
             throw new SyntaxErrorException($"Invalid target: `{cond}'");

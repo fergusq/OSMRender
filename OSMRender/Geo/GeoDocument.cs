@@ -36,7 +36,7 @@ public class GeoDocument {
         
         // Combines adjacent lines that have the same properties (e.g. adjacent road segments that have the same name) into a single line.
         // This is an important postprocessing step that must be done for OSM data.
-        IMergeableLine.CombineAdjacentFor(points.Keys, lines, line => {});
+        LineMerger.CombineAdjacentFor(points.Keys, lines, line => {});
         
         Points = points;
         Areas = areas;
@@ -49,14 +49,16 @@ public class GeoDocument {
     /// Combines adjacent LineDrawsCommands (i.e. roads, shapes) into single line draws. The ruleset will call this method.
     /// </summary>
     internal void CombineAdjacentLineDraws() {
-        foreach (var feature in DrawCommands.Select(c => c.Feature).ToHashSet()) {
+        HashSet<string> features = new();
+        DrawCommands.Select(c => c.Feature).ToList().ForEach(f => features.Add(f));
+        foreach (var feature in features) {
             Dictionary<long, LineDrawCommand> lineToDraw = new();
             DrawCommands
                 .Where(c => c.Feature == feature && c is LineDrawCommand d && d.Nodes.Count > 0)
                 .Select(c => (LineDrawCommand) c)
                 .ToList()
                 .ForEach(p => lineToDraw[p.Obj.Id] = p);
-            IMergeableLine.CombineAdjacentFor(Points.Keys, lineToDraw, l => DrawCommands.Remove(l));
+            LineMerger.CombineAdjacentFor(Points.Keys, lineToDraw, l => DrawCommands.Remove(l));
         }
     }
 }
