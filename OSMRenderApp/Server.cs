@@ -53,8 +53,8 @@ body { margin: 0; }
 <script>
 var map = L.map('map').setView([<LAT>, <LON>], 13);
 L.tileLayer('{z}/{x}/{y}.<FILETYPE>', {
-    minZoom: 11,
-    maxZoom: 18,
+    minZoom: <MIN-ZOOM>,
+    maxZoom: <MAX-ZOOM>,
     attribution: 'OSM Export'
 }).addTo(map);
 </script>
@@ -65,13 +65,15 @@ L.tileLayer('{z}/{x}/{y}.<FILETYPE>', {
         Svg,
     }
 
-    public Server(GeoDocument doc, Bounds bounds, TileType type, ILogger logger) {
+    public Server(GeoDocument doc, Bounds bounds, TileType type, int minZoom, int maxZoom, ILogger logger) {
         Document = doc;
         Bounds = bounds;
         Logger = logger;
         IndexPage = PAGE
             .Replace("<LAT>", ((bounds.MinLatitude + bounds.MaxLatitude) / 2).ToString(CultureInfo.InvariantCulture))
             .Replace("<LON>", ((bounds.MinLongitude + bounds.MaxLongitude) / 2).ToString(CultureInfo.InvariantCulture))
+            .Replace("<MIN-ZOOM>", minZoom.ToString(CultureInfo.InvariantCulture))
+            .Replace("<MAX-ZOOM>", maxZoom.ToString(CultureInfo.InvariantCulture))
             .Replace("<FILETYPE>", type switch { TileType.Png => "png", TileType.Svg => "svg", _ => throw new NotImplementedException() });
     }
 

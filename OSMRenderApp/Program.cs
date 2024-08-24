@@ -18,6 +18,7 @@ using OSMRender.Logging;
 using Mono.Options;
 using OSMRenderApp;
 using OSMRender.Render.Commands;
+using OSMRender.Rules;
 
 /** Options **/
 var verbosity = 0;
@@ -28,17 +29,19 @@ var outputPath = "";
 var logPath = "";
 var minZoom = 11;
 var maxZoom = 18;
-var outputType = "pdf";
+var filter = "";
+var outputType = "auto";
 var server = false;
 var port = "8000";
 
 var options = new OptionSet { 
-    { "t|type=", "output type (pdf, png, svg, pngtiles, svgtiles) (default: pdf); when in server mode: decides the tile image file type (pngtiles, svgtiles) (default: pngtiles)", t => outputType = t },
+    { "t|type=", "output type (auto, pdf, png, svg, pngtiles, svgtiles) (default: auto); when in server mode: decides the tile image file type (pngtiles, svgtiles) (default: pngtiles)", t => outputType = t },
     { "r|ruleset=", "ruleset file", r => rulesetPath = r },
     { "i|input=", ".osm input file", i => inputPath = i },
     { "o|output=", "output file", o => outputPath = o },
     { "m|min-zoom=", "min zoom level to create (default: 11)", (int z) => minZoom = z },
     { "M|max-zoom=", "max zoom level to create (default: 18)", (int z) => maxZoom = z },
+    { "filter=", "a feature query used as a filter for map features drawn", f => filter = f },
     { "server", "instead of generating output, start a tile server (-o, -m, -M are ignored)", s => server = s != null },
     { "P|port=", "tile server port (default: 8000)", p => port = p },
     { "L|log=", "log file path", l => logPath = l },
@@ -75,15 +78,21 @@ Reader reader = new(logger);
 DrawIcon.SearchPath = Path.GetDirectoryName(rulesetPath) ?? "";
 var rules = reader.ReadRules(rulesetPath);
 var doc = reader.ReadOSM(inputPath);
-rules.Apply(doc);
+rules.Apply(doc, filter == "" ? null : [Parser.ParseQuery(filter)]);
 
 if (server) {
-    var httpServer = new Server(doc, doc.Bounds, outputType == "svgtiles" ? Server.TileType.Svg : Server.TileType.Png, logger);
+    var httpServer = new Server(doc, doc.Bounds, outputType == "svgtiles" ? Server.TileType.Svg : Server.TileType.Png, minZoom, maxZoom, logger);
     httpServer.StartServer($"http://localhost:{port}/");
 } else {
     Generator generator = new(logger);
 
     Generator.OutputType type = outputType switch {
+        "auto" => Path.GetExtension(outputPath) switch {
+            ".pdf" => Generator.OutputType.Pdf,
+            ".png" => Generator.OutputType.Png,
+            ".svg" => Generator.OutputType.Svg,
+            _ => throw new NotImplementedException($"cannot deduce file type of {outputPath}")
+        },
         "pdf" => Generator.OutputType.Pdf,
         "png" => Generator.OutputType.Png,
         "svg" => Generator.OutputType.Svg,

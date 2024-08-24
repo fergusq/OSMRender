@@ -107,8 +107,7 @@ public abstract class DrawCommand {
         } else {
             colour =  defaultColour ?? Colour.FromRgb(0, 0, 0);
         }
-        double alpha = opacityProperty is null ? 1 : GetNum(opacityProperty, 0, 1, 1);
-        return colour.WithAlpha(alpha);
+        return opacityProperty is null ? colour : colour.WithAlpha(GetNum(opacityProperty, 0, 1, 1));
     }
 
     protected bool TryGetCoordinates(out double lat, out double lon) {

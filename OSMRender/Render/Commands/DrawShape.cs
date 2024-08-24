@@ -24,7 +24,6 @@ namespace OSMRender.Render.Commands;
 public class DrawShape(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : LineDrawCommand(properties, importance, feature, obj) {
 
     private readonly static double LINE_SHAPE_INTERVAL = 100;
-    private readonly static double MIN_LINE_SHAPE_LEN = LINE_SHAPE_INTERVAL / 2;
 
     public override void Draw(PageRenderer renderer, int layer) {
         if (layer != Layer) return;
@@ -88,15 +87,24 @@ public class DrawShape(IDictionary<string, string> properties, int importance, s
             path.LineTo(-1, 1);
             path.Close();
             paths.Add(path);
-            renderer.Graphics.FillPath(path, fillColour);
-            renderer.Graphics.StrokePath(path, pathColour, pathWidth);
+        } else if (shape == "diamond") {
+            path.MoveTo(0, -1);
+            path.LineTo(-1, 0);
+            path.LineTo(0, 1);
+            path.LineTo(1, 0);
+            path.Close();
+            paths.Add(path);
+        } else if (shape == "triangle") {
+            path.MoveTo(-0.5, 0);
+            path.LineTo(0, -0.75);
+            path.LineTo(0.5, 0);
+            path.Close();
+            paths.Add(path);
         } else if (shape == "circle") {
             path.Arc(0, 0, 1, 0, 2*Math.PI);
             paths.Add(path);
-            renderer.Graphics.FillPath(path, fillColour);
-            renderer.Graphics.StrokePath(path, pathColour, pathWidth);
         } else {
-            renderer.Logger.Error($"Unknown shape `{shape}'");
+            renderer.Logger.Error($"{Feature}: Unknown shape `{shape}'");
             return;
         }
 
@@ -112,10 +120,13 @@ public class DrawShape(IDictionary<string, string> properties, int importance, s
                 linePath.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
             }
 
-            // Draw shape along the line at intervals of LINE_SHAPE_INTERVAL units
+            var shapeInterval = size * GetNum("shape-spacing", renderer.Renderer.ZoomLevel, defaultValue: LINE_SHAPE_INTERVAL/size);
+            var minShapeLen = shapeInterval / 2;
+
+            // Draw shape along the line at intervals of shapeInterval units
             var len = linePath.MeasureLength();
-            if (len >= MIN_LINE_SHAPE_LEN) {
-                for (double i = MIN_LINE_SHAPE_LEN; i < len; i += LINE_SHAPE_INTERVAL) {
+            if (len >= minShapeLen) {
+                for (double i = minShapeLen; i < len; i += shapeInterval) {
                     var position = linePath.GetPointAtAbsolute(i);
                     var tangent = linePath.GetTangentAtAbsolute(i);
                     var angle = Math.Atan2(tangent.Y, tangent.X) + angleOffset;

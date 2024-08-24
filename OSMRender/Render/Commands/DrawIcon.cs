@@ -35,7 +35,7 @@ public class DrawIcon(IDictionary<string, string> properties, int importance, st
 
         var image = GetImage(GetString("icon-image"));
         if (image is null) {
-            renderer.Logger.Error($"Icon `{Properties["icon-image"]}' does not exist");
+            renderer.Logger.Error($"{Feature}: Icon `{Properties["icon-image"]}' does not exist");
             return;
         }
         renderer.Graphics.DrawRasterImage(x - size/2, y - size/2, size, size, image);

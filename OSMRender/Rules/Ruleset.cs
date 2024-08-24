@@ -51,7 +51,7 @@ public class Ruleset(ILogger logger) {
     /// Constructs the feature database and evaluates all rules for all features, adding draw commands for each evaluated draw statement to the GeoDocument object.
     /// </summary>
     /// <param name="doc">the GeoDocument for which the rules are evaluated and DrawCommands of which are modified</param>
-    public void Apply(GeoDocument doc) {
+    public void Apply(GeoDocument doc, IEnumerable<IQuery>? filters = null) {
         var features = new List<Feature>();
         foreach (var point in doc.Points) {
             foreach (var query in PointFeatures) {
@@ -76,6 +76,9 @@ public class Ruleset(ILogger logger) {
                     features.Add(new Feature(query.Key, area.Value));
                 }
             }
+        }
+        if (filters is not null && filters.Count() > 0) {
+            features.RemoveAll(feature => !filters.Any(filter => filter.Matches(doc, feature.Obj)));
         }
         foreach (var rule in Rules) {
             foreach (var feature in features) {

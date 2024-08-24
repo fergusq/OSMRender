@@ -28,4 +28,9 @@ public class Line(long id, IDictionary<string, string> tags) : GeoObj(id, tags),
     public IDictionary<string, string> MergeableLineProperties => Tags;
 
     public override Bounds Bounds => Nodes.Select(n => n.Bounds).Aggregate((a, b) => a.MergeWith(b));
+
+    /// <summary>
+    /// Returns true if the first and last node are the same, which is a requirement for a line being an area.
+    /// </summary>
+    public bool MayBeArea => Nodes.First().Id == Nodes.Last().Id;
 }

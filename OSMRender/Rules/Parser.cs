@@ -249,7 +249,7 @@ public class Parser {
         var colon = line.IndexOf(':');
         var name = line.Substring(0, colon).Trim();
         var queryCode = line.Substring(colon+1).Trim();
-        var query = ParseQueryCode(queryCode);
+        var query = ParseQuery(queryCode);
 
         foreach (var type in featureTypes) {
             if (type == "points") {
@@ -262,9 +262,14 @@ public class Parser {
         }
     }
 
-    private Ruleset.IQuery ParseQueryCode(string queryCode) {
+    /// <summary>
+    /// Parses a feature query such as "area[natural=water]".
+    /// </summary>
+    /// <param name="queryCode">the query as a string</param>
+    /// <returns>the IQuery object that can be used to test the query on map objects</returns>
+    public static Ruleset.IQuery ParseQuery(string queryCode) {
         var tokens = TokenizeWithRegex(@"^(""[^""]*""|[\w@:\-]+|[=.,()[\] ])", queryCode).Where(s => s.Trim().Length > 0).ToList();
-        var query = ParseQuery(tokens);
+        var query = ParseOrQuery(tokens);
         while (tokens.Count > 0) {
             var right = ParsePrimitiveQuery(tokens);
             query = new BoolOpQuery(BoolOpQuery.Op.Or, query, right);
@@ -272,7 +277,7 @@ public class Parser {
         return query;
     }
 
-    private Ruleset.IQuery ParseQuery(List<string> tokens) {
+    private static Ruleset.IQuery ParseOrQuery(List<string> tokens) {
         var left = ParseAndQuery(tokens);
         while (TryEat(tokens, "OR", "or")) {
             var right = ParseAndQuery(tokens);
@@ -281,7 +286,7 @@ public class Parser {
         return left;
     }
 
-    private Ruleset.IQuery ParseAndQuery(List<string> tokens) {
+    private static Ruleset.IQuery ParseAndQuery(List<string> tokens) {
         var left = ParseNestedQuery(tokens);
         while (TryEat(tokens, "AND", "and")) {
             var right = ParseNestedQuery(tokens);
@@ -290,7 +295,7 @@ public class Parser {
         return left;
     }
 
-    private Ruleset.IQuery ParseNestedQuery(List<string> tokens) {
+    private static Ruleset.IQuery ParseNestedQuery(List<string> tokens) {
         var left = ParsePrimitiveQuery(tokens);
         while (TryEat(tokens, ".")) {
             var right = ParsePrimitiveQuery(tokens);
@@ -299,7 +304,7 @@ public class Parser {
         return left;
     }
 
-    private Ruleset.IQuery ParsePrimitiveQuery(List<string> tokens) {
+    private static Ruleset.IQuery ParsePrimitiveQuery(List<string> tokens) {
         if (TryEat(tokens, "@isOneOf")) {
             Eat(tokens, "(");
             var key = Eat(tokens);
@@ -320,7 +325,7 @@ public class Parser {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
                 if (tokens.Count > 0 && tokens[0] != "]") {
-                    subquery = ParseQuery(tokens);
+                    subquery = ParseOrQuery(tokens);
                 }
                 Eat(tokens, "]");
             }
@@ -329,7 +334,7 @@ public class Parser {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
                 if (tokens.Count > 0 && tokens[0] != "]") {
-                    subquery = ParseQuery(tokens);
+                    subquery = ParseOrQuery(tokens);
                 }
                 Eat(tokens, "]");
             }
@@ -338,7 +343,7 @@ public class Parser {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
                 if (tokens.Count > 0 && tokens[0] != "]") {
-                    subquery = ParseQuery(tokens);
+                    subquery = ParseOrQuery(tokens);
                 }
                 Eat(tokens, "]");
             }
@@ -347,7 +352,7 @@ public class Parser {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
                 if (tokens.Count > 0 && tokens[0] != "]") {
-                    subquery = ParseQuery(tokens);
+                    subquery = ParseOrQuery(tokens);
                 }
                 Eat(tokens, "]");
             }
@@ -356,7 +361,7 @@ public class Parser {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
                 if (tokens.Count > 0 && tokens[0] != "]") {
-                    subquery = ParseQuery(tokens);
+                    subquery = ParseOrQuery(tokens);
                 }
                 Eat(tokens, "]");
             }
@@ -365,7 +370,7 @@ public class Parser {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
                 if (tokens.Count > 0 && tokens[0] != "]") {
-                    subquery = ParseQuery(tokens);
+                    subquery = ParseOrQuery(tokens);
                 }
                 Eat(tokens, "]");
             }
@@ -374,7 +379,7 @@ public class Parser {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
                 if (tokens.Count > 0 && tokens[0] != "]") {
-                    subquery = ParseQuery(tokens);
+                    subquery = ParseOrQuery(tokens);
                 }
                 Eat(tokens, "]");
             }
@@ -383,17 +388,17 @@ public class Parser {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
                 if (tokens.Count > 0 && tokens[0] != "]") {
-                    subquery = ParseQuery(tokens);
+                    subquery = ParseOrQuery(tokens);
                 }
                 Eat(tokens, "]");
             }
             return new NullQuery();
         } else if (TryEat(tokens, "(")) {
-            var subquery = ParseQuery(tokens);
+            var subquery = ParseOrQuery(tokens);
             Eat(tokens, ")");
             return subquery;
         } else if (TryEat(tokens, "[")) {
-            var subquery = ParseQuery(tokens);
+            var subquery = ParseOrQuery(tokens);
             Eat(tokens, "]");
             return subquery;
         } else if (TryEat(tokens, "NOT", "not")) {
@@ -655,7 +660,7 @@ public class Parser {
             if (key == "draw") {
                 return new DrawStatement(val, Lines.Count, Logger);
             } else if (key == "for") {
-                var query = ParseQueryCode(val);
+                var query = ParseQuery(val);
                 var stmts = ParseStatements();
                 return new IfStatement(
                     [(new QueryCondition(query), stmts)],
@@ -800,14 +805,14 @@ public class Parser {
             switch (Type) {
             case "fill":
                 if (feature.Obj is not Area) {
-                    Logger.Warning($"draw:fill is only supported for areas, not for {feature.Name}");
+                    Logger.Warning($"{feature.Name}: draw:fill is only supported for areas");
                     throw new StopException();
                 }
                 doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, feature.Name, (Area) feature.Obj));
                 break;
             case "line":
                 if (feature.Obj is not Line) {
-                    Logger.Warning($"draw:line is only supported for lines, not for {feature.Name}");
+                    Logger.Warning($"{feature.Name}: draw:line is only supported for lines");
                     throw new StopException();
                 }
                 doc.DrawCommands.Add(new DrawLine(state.Properties, Importance, feature.Name, (Line) feature.Obj));

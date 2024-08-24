@@ -28,7 +28,7 @@ public static class OsmXmlParser {
                 .Where(id => CheckExists("node", points, id, logger))
                 .Select(id => points[id]);
             lines[id] = new Line(id, tags) { Nodes = nodes.ToList() };
-            if (nodes.First().Id == nodes.Last().Id) {
+            if (lines[id].MayBeArea) {
                 areas[id] = new Area(id, tags) { OuterEdges = [nodes.ToList()] };
             }
         }
@@ -59,10 +59,15 @@ public static class OsmXmlParser {
                 } );
             relations[id] = new Relation(id, tags) /*{ Members = members.ToList() }*/;
             if (tags.ContainsKey("type") && tags["type"] == "multipolygon") {
-                areas[id] = new Area(id, tags) {
-                    OuterEdges = members.Where(m => m.Role == "outer" && m.Value is Line).Select(m => new List<Point>(((Line) m.Value).Nodes)).ToList(),
-                    InnerEdges = members.Where(m => m.Role == "inner" && m.Value is Line).Select(m => new List<Point>(((Line) m.Value).Nodes)).ToList()
-                };
+                var edges = members.Where(m => m.Value is Line line && line.MayBeArea);
+                var outerEdges = edges.Where(m => m.Role == "outer");
+                var innerEdges = edges.Where(m => m.Role == "inner");
+                if (outerEdges.Count() > 0) {
+                    areas[id] = new Area(id, tags) {
+                        OuterEdges = outerEdges.Select(m => new List<Point>(((Line) m.Value).Nodes)).ToList(),
+                        InnerEdges = innerEdges.Select(m => new List<Point>(((Line) m.Value).Nodes)).ToList()
+                    };
+                }
             }
         }
 
