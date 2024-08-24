@@ -646,19 +646,32 @@ rules
 			line-width : 1
 		draw : shape
 	target : bollard
+		//define
+		//	min-zoom : 16
+		//	fill-color : #7D7D7D
+		//	line-style : none
+		//	shape: circle
+		//	shape-size : 16:1;18:2
+		//draw : shape
 		define
 			min-zoom : 16
-			fill-color : #7D7D7D
-			line-style : none
-			shape-size : 16:1;18:2
-		draw : shape
+			icon-image : icons/SJJB/png/barrier_bollard.p.32.png
+			icon-width : 8
+		draw : icon
+
 	target : powertower
 		define
-			min-zoom: 14
+			min-zoom: 16
 			shape : custom
 			shape-def : m:-1,1;l:1,1,1,-1,-1,-1,-1,1,1,-1;m:-1,-1;l:1,1
 			shape-size : 14:2;20:9
 			line-width : 1
+
+		// larger towers
+		for : power=tower
+			define
+				min-zoom: 14
+
 		draw : shape
 
 	target : power_line
@@ -666,12 +679,22 @@ rules
 			min-zoom: 16
 			line-width: 1
 			line-color : #5c5c5c white 50%
+
+		// major lines
 		for : power=line
 			define
-				line-color : #5c5c5c
 				min-zoom : 14
 				line-width: 1
+				line-color : #5c5c5c
+
 		draw : line
+
+	target : substation
+		define
+			min-zoom : 18
+			icon-image : icons/SJJB/png/power_substation.p.32.png
+			icon-width : 16
+		draw : icon
 
 	target:aerialway *
 		define
@@ -1177,7 +1200,7 @@ rules
 	target: parking
 		define
 			icon-image : icons/SJJB/png/transport_parking.p.32.png
-			min-zoom : 15
+			min-zoom : 16
 			icon-width : 16
 		draw : icon
 	target: bus stop
@@ -1447,10 +1470,17 @@ rules
 		draw : icon
 	target: tree
 		define
-			min-zoom : 16
+			min-zoom : 17
 			shape : circle
+		define
 			shape-size : 6
-			fill-color : lightgreen
+			fill-color : green
+			fill-opacity: 30%
+		draw : shape
+		define
+			shape-size : 1
+			fill-color : #B27F36
+			fill-opacity: 100%
 		draw : shape
 	target: memorial
 		define
