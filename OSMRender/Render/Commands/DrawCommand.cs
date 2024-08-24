@@ -206,6 +206,19 @@ public abstract class DrawCommand {
         return path;
     }
 
+    protected (VectSharp.Point point, Size size) GetPageBounds(PageRenderer renderer) {
+        var bounds = Obj.Bounds;
+        var minX = renderer.LongitudeToX(bounds.MinLongitude);
+        var maxX = renderer.LongitudeToX(bounds.MaxLongitude);
+        var minY = renderer.LatitudeToY(bounds.MaxLatitude); // Y axis is flipped
+        var maxY = renderer.LatitudeToY(bounds.MinLatitude);
+        var buffer = 20; // add a bit extra space for borders etc.
+        return (
+            new VectSharp.Point(minX - buffer, minY - buffer),
+            new Size(maxX - minX + 2 * buffer, maxY - minY + 2 * buffer)
+        );
+    }
+
     protected static int GetLayerCode(int layer) {
         return layer * 10000;
     }

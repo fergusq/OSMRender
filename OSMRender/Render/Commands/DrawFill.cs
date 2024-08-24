@@ -16,6 +16,7 @@
 
 using OSMRender.Geo;
 using VectSharp;
+using VectSharp.Filters;
 
 namespace OSMRender.Render.Commands;
 
@@ -28,27 +29,31 @@ public class DrawFill : DrawCommand {
 
     public override void Draw(PageRenderer renderer, int layer) {
         // Areas are all drawn in layer 0
-        if (layer == Layer) {
-            List<GraphicsPath> paths = [];
+        if (layer != Layer) return;
 
-            // Draw outer edges as separate polygons if there are no inner edges
-            if (Area.InnerEdges.Count == 0) {
-                foreach (var outer in Area.OuterEdges) {
-                    paths.Add(NodesToPath(renderer, outer));
-                }
-            }
+        List<GraphicsPath> paths = [];
+        foreach (var outer in Area.OuterEdges) {
+            paths.Add(NodesToPath(renderer, outer));
+        }
 
-            // Draw everything together (TODO: this is bad, use intersections)
-            else {
-                paths.Add(NodesToPath(renderer, Area.CalculateEdge()));
-            }
+        // Construct a mask where the background is white (visible) and inner polygons are black (invisible)
+        Graphics mask = new();
+        var (point, size) = GetPageBounds(renderer);
+        mask.FillRectangle(point, size, Colours.White);
+        foreach (var inner in Area.InnerEdges) {
+            mask.FillPath(NodesToPath(renderer, inner), Colours.Black);
+        }
 
-            foreach (var path in paths) {
-                renderer.Graphics.FillPath(path, GetColour("fill-color", "fill-opacity"));
+        Graphics output = new();
+        foreach (var path in paths) {
+            output.FillPath(path, GetColour("fill-color", "fill-opacity"));
+        }
 
-                if (GetString("border-style") != "") {
-                    StrokePath(path, renderer, "border");
-                }
+        renderer.Graphics.DrawGraphics(0, 0, output, new MaskFilter(mask));
+
+        foreach (var path in paths) {
+            if (GetString("border-style") != "") {
+                StrokePath(path, renderer, "border");
             }
         }
     }
