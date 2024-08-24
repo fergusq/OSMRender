@@ -16,17 +16,15 @@
 
 using System.Globalization;
 using OSMRender.Geo;
+using OSMRender.Utils;
 using VectSharp;
 
 namespace OSMRender.Render.Commands;
 
-public class DrawShape : LineDrawCommand {
+public class DrawShape(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : LineDrawCommand(properties, importance, feature, obj) {
 
     private readonly static double LINE_SHAPE_INTERVAL = 100;
     private readonly static double MIN_LINE_SHAPE_LEN = LINE_SHAPE_INTERVAL / 2;
-
-    public DrawShape(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : base(properties, importance, feature, obj) {
-    }
 
     public override void Draw(PageRenderer renderer, int layer) {
         if (layer != Layer) return;
@@ -45,13 +43,13 @@ public class DrawShape : LineDrawCommand {
                 } else if (command.StartsWith("f:")) {
                     fillColour = Colour.FromCSSString(command.Substring(2)) ?? fillColour;
                 } else if (command.StartsWith("pw:")) {
-                    pathWidth = double.Parse(command.Substring(3), CultureInfo.InvariantCulture);
+                    pathWidth = command.Substring(3).ParseInvariantDouble();
                 } else if (command.StartsWith("a:")) {
                     var points = command.Substring(2).Split(',');
-                    var x = double.Parse(points[0], CultureInfo.InvariantCulture);
-                    var y = double.Parse(points[1], CultureInfo.InvariantCulture);
-                    var dx = double.Parse(points[2], CultureInfo.InvariantCulture);
-                    var dy = double.Parse(points[3], CultureInfo.InvariantCulture);
+                    var x = points[0].ParseInvariantDouble();
+                    var y = points[1].ParseInvariantDouble();
+                    var dx = points[2].ParseInvariantDouble();
+                    var dy = points[3].ParseInvariantDouble();
                     path.QuadraticBezierTo(new VectSharp.Point(x, y), new VectSharp.Point(dx, dy));
                 } else if (command.StartsWith("z") || command.StartsWith("Z")) {
                     path.Close();
@@ -63,8 +61,8 @@ public class DrawShape : LineDrawCommand {
                         throw new Exception("odd number of coordinates");
                     }
                     for (int i = 0; i < points.Length; i += 2) {
-                        var x = double.Parse(points[i], CultureInfo.InvariantCulture);
-                        var y = double.Parse(points[i+1], CultureInfo.InvariantCulture);
+                        var x = points[i].ParseInvariantDouble();
+                        var y = points[i+1].ParseInvariantDouble();
                         path.MoveTo(x, y);
                     }
                 } else {
@@ -73,8 +71,8 @@ public class DrawShape : LineDrawCommand {
                         throw new Exception("odd number of coordinates");
                     }
                     for (int i = 0; i < points.Length; i += 2) {
-                        var x = double.Parse(points[i], CultureInfo.InvariantCulture);
-                        var y = double.Parse(points[i+1], CultureInfo.InvariantCulture);
+                        var x = points[i].ParseInvariantDouble();
+                        var y = points[i+1].ParseInvariantDouble();
                         path.LineTo(x, y);
                     }
                 }
@@ -156,6 +154,6 @@ public class DrawShape : LineDrawCommand {
 
     private int Layer => GetLayerCode(
         2,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0
+        LayerProperty
     );
 }

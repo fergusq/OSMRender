@@ -20,12 +20,9 @@ using VectSharp.Filters;
 
 namespace OSMRender.Render.Commands;
 
-public class DrawFill : DrawCommand {
-    private readonly Area Area;
+public class DrawFill(IDictionary<string, string> properties, int importance, string feature, Area obj) : DrawCommand(properties, importance, feature, obj) {
 
-    public DrawFill(IDictionary<string, string> properties, int importance, string feature, Area obj) : base(properties, importance, feature, obj) {
-        Area = obj;
-    }
+    private readonly Area Area = obj;
 
     public override void Draw(PageRenderer renderer, int layer) {
         // Areas are all drawn in layer 0
@@ -64,6 +61,6 @@ public class DrawFill : DrawCommand {
 
     private int Layer => GetLayerCode(
         0,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0
+        LayerProperty
     );
 }

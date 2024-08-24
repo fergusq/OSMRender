@@ -19,11 +19,7 @@ namespace OSMRender.Geo;
 /// <summary>
 /// Represents the background color of the map.
 /// </summary>
-public class Background : GeoObj {
+public class Background(long id, IDictionary<string, string> tags, Bounds bounds) : GeoObj(id, tags) {
 
-    public override Bounds Bounds { get; }
-
-    public Background(long id, IDictionary<string, string> tags, Bounds bounds) : base(id, tags) {
-        Bounds = bounds;
-    }
+    public override Bounds Bounds { get; } = bounds;
 }

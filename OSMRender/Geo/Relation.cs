@@ -19,18 +19,14 @@ namespace OSMRender.Geo;
 /// <summary>
 /// A GeoObj corresponding to an OSM relation.
 /// </summary>
-public class Relation : GeoObj {
+public class Relation(long id, IDictionary<string, string> tags) : GeoObj(id, tags) {
 
     public struct Member {
         public string Role;
         public GeoObj Value;
     }
 
-    public IList<Member> Members { get; set; }
+    public IList<Member> Members { get; set; } = [];
 
     public override Bounds Bounds => Members.Select(n => n.Value.Bounds).Aggregate((a, b) => a.MergeWith(b));
-
-    public Relation(long id, IDictionary<string, string> tags) : base(id, tags) {
-        Members = [];
-    }
 }

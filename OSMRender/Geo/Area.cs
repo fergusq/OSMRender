@@ -19,21 +19,16 @@ namespace OSMRender.Geo;
 /// <summary>
 /// An area is an OSM way or multipolygon relation. If it's a way, its first and last nodes must be the same.
 /// </summary>
-public class Area : GeoObj {
+public class Area(long id, IDictionary<string, string> tags) : GeoObj(id, tags) {
 
-    public List<List<Point>> OuterEdges { get; set; }
+    public List<List<Point>> OuterEdges { get; set; } = [];
 
-    public List<List<Point>> InnerEdges { get; set; }
+    public List<List<Point>> InnerEdges { get; set; } = [];
 
     public override Bounds Bounds => OuterEdges.SelectMany(e => e).Select(n => n.Bounds).Aggregate((a, b) => a.MergeWith(b));
 
     public double MeanLatitude => OuterEdges.SelectMany(e => e).Select(p => p.Latitude).Sum() / OuterEdges.SelectMany(e => e).Count();
     public double MeanLongitude => OuterEdges.SelectMany(e => e).Select(p => p.Longitude).Sum() / OuterEdges.SelectMany(e => e).Count();
-
-    public Area(long id, IDictionary<string, string> tags) : base(id, tags) {
-        OuterEdges = [];
-        InnerEdges = [];
-    }
 
     private static bool IsClockwise(IList<Point> points) {
         var n = points.Count;

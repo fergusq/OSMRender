@@ -19,11 +19,9 @@ using VectSharp;
 
 namespace OSMRender.Render.Commands;
 
-public class DrawLine : DrawCommand {
-    private readonly Line Line;
-    public DrawLine(IDictionary<string, string> properties, int importance, string feature, Line obj) : base(properties, importance, feature, obj) {
-        Line = obj;
-    }
+public class DrawLine(IDictionary<string, string> properties, int importance, string feature, Line obj) : DrawCommand(properties, importance, feature, obj) {
+
+    private readonly Line Line = obj;
 
     public override void Draw(PageRenderer renderer, int layer) {
         if (layer != FillLayer && layer != StrokeLayer) {
@@ -47,13 +45,13 @@ public class DrawLine : DrawCommand {
 
     private int StrokeLayer => GetLayerCode(
         1,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0,
+        LayerProperty,
         0
     );
 
     private int FillLayer => GetLayerCode(
         1,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0,
+        LayerProperty,
         1
     );
 }

@@ -19,6 +19,7 @@ using System.Text.RegularExpressions;
 using OSMRender.Geo;
 using OSMRender.Logging;
 using OSMRender.Render.Commands;
+using OSMRender.Utils;
 
 namespace OSMRender.Rules;
 
@@ -417,14 +418,10 @@ public class Parser {
     /// Represents a tag query, i.e. either tag=value or @isAnyOf(tag, value1, value2).
     /// If there are no values, TagExistQuery should be used instead.
     /// </summary>
-    private readonly struct TagQuery : Ruleset.IQuery {
-        private readonly string Key;
-        private readonly IEnumerable<string> Val;
+    private readonly struct TagQuery(string key, IEnumerable<string> val) : Ruleset.IQuery {
 
-        public TagQuery(string key, IEnumerable<string> val) {
-            Key = key;
-            Val = val;
-        }
+        private readonly string Key = key;
+        private readonly IEnumerable<string> Val = val;
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
@@ -435,12 +432,9 @@ public class Parser {
     /// <summary>
     /// Represents an existence query (a tag query without any values).
     /// </summary>
-    private readonly struct TagExistsQuery : Ruleset.IQuery {
-        private readonly string Key;
+    private readonly struct TagExistsQuery(string key) : Ruleset.IQuery {
 
-        public TagExistsQuery(string key) {
-            Key = key;
-        }
+        private readonly string Key = key;
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
@@ -451,36 +445,29 @@ public class Parser {
     /// <summary>
     /// Represents a @isMulti query.
     /// </summary>
-    private readonly struct IsMultiQuery : Ruleset.IQuery {
-        private readonly string Key;
-        private readonly int Num;
+    private readonly struct IsMultiQuery(string key, int num) : Ruleset.IQuery {
 
-        public IsMultiQuery(string key, int num) {
-            Key = key;
-            Num = num;
-        }
+        private readonly string Key = key;
+        private readonly int Num = num;
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
-            return obj.Tags is not null && obj.Tags.ContainsKey(Key) && double.Parse(obj.Tags[Key], CultureInfo.InvariantCulture) % Num == 0;
+            return obj.Tags is not null && obj.Tags.ContainsKey(Key) && obj.Tags[Key].ParseInvariantDouble() % Num == 0;
         }
     }
 
     /// <summary>
     /// Represents either an "A OR B" or "A AND B" query.
     /// </summary>
-    private readonly struct BoolOpQuery : Ruleset.IQuery {
+    private readonly struct BoolOpQuery(BoolOpQuery.Op operation, params Ruleset.IQuery[] queries) : Ruleset.IQuery {
+
         public enum Op {
             Or,
             And,
         }
-        private readonly Op Operation;
-        private readonly Ruleset.IQuery[] Queries;
 
-        public BoolOpQuery(Op operation, params Ruleset.IQuery[] queries) {
-            Operation = operation;
-            Queries = queries;
-        }
+        private readonly Op Operation = operation;
+        private readonly Ruleset.IQuery[] Queries = queries;
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
@@ -491,12 +478,9 @@ public class Parser {
     /// <summary>
     /// Represents a node[] query.
     /// </summary>
-    private readonly struct IsNodeQuery : Ruleset.IQuery {
-        private readonly Ruleset.IQuery? Subquery;
+    private readonly struct IsNodeQuery(Ruleset.IQuery? subquery) : Ruleset.IQuery {
 
-        public IsNodeQuery(Ruleset.IQuery? subquery) {
-            Subquery = subquery;
-        }
+        private readonly Ruleset.IQuery? Subquery = subquery;
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
@@ -507,12 +491,9 @@ public class Parser {
     /// <summary>
     /// Represents a line[] query.
     /// </summary>
-    private readonly struct IsLineQuery : Ruleset.IQuery {
-        private readonly Ruleset.IQuery? Subquery;
+    private readonly struct IsLineQuery(Ruleset.IQuery? subquery) : Ruleset.IQuery {
 
-        public IsLineQuery(Ruleset.IQuery? subquery) {
-            Subquery = subquery;
-        }
+        private readonly Ruleset.IQuery? Subquery = subquery;
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
@@ -523,12 +504,9 @@ public class Parser {
     /// <summary>
     /// Represents a area[] query.
     /// </summary>
-    private readonly struct IsAreaQuery : Ruleset.IQuery {
-        private readonly Ruleset.IQuery? Subquery;
+    private readonly struct IsAreaQuery(Ruleset.IQuery? subquery) : Ruleset.IQuery {
 
-        public IsAreaQuery(Ruleset.IQuery? subquery) {
-            Subquery = subquery;
-        }
+        private readonly Ruleset.IQuery? Subquery = subquery;
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
@@ -539,12 +517,9 @@ public class Parser {
     /// <summary>
     /// Represents a relation[] query.
     /// </summary>
-    private readonly struct IsRelationQuery : Ruleset.IQuery {
-        private readonly Ruleset.IQuery? Subquery;
+    private readonly struct IsRelationQuery(Ruleset.IQuery? subquery) : Ruleset.IQuery {
 
-        public IsRelationQuery(Ruleset.IQuery? subquery) {
-            Subquery = subquery;
-        }
+        private readonly Ruleset.IQuery? Subquery = subquery;
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
@@ -555,12 +530,9 @@ public class Parser {
     /// <summary>
     /// Represents a "NOT A" query.
     /// </summary>
-    private readonly struct NotQuery : Ruleset.IQuery {
-        private readonly Ruleset.IQuery Subquery;
+    private readonly struct NotQuery(Ruleset.IQuery subquery) : Ruleset.IQuery {
 
-        public NotQuery(Ruleset.IQuery subquery) {
-            Subquery = subquery;
-        }
+        private readonly Ruleset.IQuery Subquery = subquery;
 
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
@@ -687,7 +659,7 @@ public class Parser {
                 var stmts = ParseStatements();
                 return new IfStatement(
                     [(new QueryCondition(query), stmts)],
-                    Array.Empty<IStatement>()
+                    []
                 );
             } else if (key == "if") {
                 var branches = new List<(ICondition, IEnumerable<IStatement>)>();
@@ -703,7 +675,7 @@ public class Parser {
                 if (TryEatLine("else")) {
                     elseStmts = ParseStatements();
                 } else {
-                    elseStmts = new List<IStatement>();
+                    elseStmts = [];
                 }
                 return new IfStatement(branches, elseStmts);
             } else {
@@ -731,12 +703,9 @@ public class Parser {
     /// <summary>
     /// A condition that matches the feature name against a regular expession.
     /// </summary>
-    private readonly struct RegexCondition : ICondition {
-        private readonly Regex Regex;
+    private readonly struct RegexCondition(Regex regex) : ICondition {
 
-        public RegexCondition(Regex regex) {
-            Regex = regex;
-        }
+        private readonly Regex Regex = regex;
 
         public bool Matches(GeoDocument doc, Ruleset.Feature feature) {
             return Regex.IsMatch(feature.Name);
@@ -746,12 +715,9 @@ public class Parser {
     /// <summary>
     /// A condition that tests the feature object against a query.
     /// </summary>
-    private readonly struct QueryCondition : ICondition {
-        private readonly Ruleset.IQuery Query;
+    private readonly struct QueryCondition(Ruleset.IQuery query) : ICondition {
 
-        public QueryCondition(Ruleset.IQuery query) {
-            Query = query;
-        }
+        private readonly Ruleset.IQuery Query = query;
 
         public bool Matches(GeoDocument doc, Ruleset.Feature feature) {
             return Query.Matches(doc, feature.Obj);
@@ -768,12 +734,9 @@ public class Parser {
     /// <summary>
     /// The define statement alters the state by setting properties.
     /// </summary>
-    private readonly struct DefineStatement : IStatement {
-        private readonly IDictionary<string, string> Properties;
+    private readonly struct DefineStatement(IDictionary<string, string> properties) : IStatement {
 
-        public DefineStatement(IDictionary<string, string> properties) {
-            Properties = properties;
-        }
+        private readonly IDictionary<string, string> Properties = properties;
 
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state) {
             Properties.ToList().ForEach(p => state.Properties[p.Key] = p.Value);
@@ -783,14 +746,10 @@ public class Parser {
     /// <summary>
     /// The if statement executes one of its branches based on conditions, or the else statements if no branches were evaluated.
     /// </summary>
-    private readonly struct IfStatement : IStatement {
-        private readonly IEnumerable<(ICondition, IEnumerable<IStatement>)> Branches;
-        private readonly IEnumerable<IStatement> ElseStatements;
+    private readonly struct IfStatement(IEnumerable<(ICondition, IEnumerable<IStatement>)> branches, IEnumerable<IStatement> elseStatements) : IStatement {
 
-        public IfStatement(IEnumerable<(ICondition, IEnumerable<IStatement>)> branches, IEnumerable<IStatement> elseStatements) {
-            Branches = branches;
-            ElseStatements = elseStatements;
-        }
+        private readonly IEnumerable<(ICondition, IEnumerable<IStatement>)> Branches = branches;
+        private readonly IEnumerable<IStatement> ElseStatements = elseStatements;
 
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state) {
             foreach (var (condition, stmts) in Branches) {
@@ -830,16 +789,11 @@ public class Parser {
     /// Draw commands are evaluated based on their importance, which is based on the location of the draw command in the file.
     /// Commands higher in the file are evaluated after commands lowed in the file (i.e. commands higher will be drawn on top of commands lower).
     /// </summary>
-    private readonly struct DrawStatement : IStatement {
-        private readonly string Type;
-        private readonly int Importance;
-        private readonly ILogger Logger;
+    private readonly struct DrawStatement(string type, int importance, ILogger logger) : IStatement {
 
-        public DrawStatement(string type, int importance, ILogger logger) {
-            Type = type;
-            Importance = importance;
-            Logger = logger;
-        }
+        private readonly string Type = type;
+        private readonly int Importance = importance;
+        private readonly ILogger Logger = logger;
 
         public void Apply(GeoDocument doc, Ruleset.Feature feature, State state) {
             Logger.Debug($"Drawing {feature.Name} {feature.Obj.Id} as {Type} with Importance={Importance}, {string.Join(", ", state.Properties.Select(p => p.Key + "=" + p.Value))}");
@@ -879,8 +833,8 @@ public class Parser {
     /// <summary>
     /// Represents a target declaration. A rule has a condition specified after the "target:" keyword and a list of statements.
     /// </summary>
-    private readonly struct Rule : Ruleset.IRule
-    {
+    private readonly struct Rule : Ruleset.IRule {
+
         private readonly ICondition Condition;
         private readonly IEnumerable<IStatement> Statements;
         private readonly ILogger Logger;

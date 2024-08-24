@@ -19,15 +19,10 @@ namespace OSMRender.Geo;
 /// <summary>
 /// A GeoObj corresponding to an OSM node.
 /// </summary>
-public class Point : GeoObj {
+public class Point(long id, IDictionary<string, string> tags, double lat, double lon) : GeoObj(id, tags) {
 
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
+    public double Latitude { get; set; } = lat;
+    public double Longitude { get; set; } = lon;
 
     public override Bounds Bounds => Bounds.FromPoint(Latitude, Longitude);
-
-    public Point(long id, IDictionary<string, string> tags, double lat, double lon) : base(id, tags) {
-        Latitude = lat;
-        Longitude = lon;
-    }
 }

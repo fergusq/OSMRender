@@ -7,6 +7,10 @@ internal static class Extensions {
         return long.Parse(s, CultureInfo.InvariantCulture);
     }
 
+    internal static int ParseInvariantInt(this string s) {
+        return int.Parse(s, CultureInfo.InvariantCulture);
+    }
+
     internal static double ParseInvariantDouble(this string s) {
         return double.Parse(s, CultureInfo.InvariantCulture);
     }

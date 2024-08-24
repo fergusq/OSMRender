@@ -19,12 +19,9 @@ using VectSharp;
 
 namespace OSMRender.Render.Commands;
 
-public class DrawBackground : DrawCommand {
-    private readonly Background Background;
+public class DrawBackground(IDictionary<string, string> properties, int importance, string feature, Background background) : DrawCommand(properties, importance, feature, background) {
 
-    public DrawBackground(IDictionary<string, string> properties, int importance, string feature, Background background) : base(properties, importance, feature, background) {
-        Background = background;
-    }
+    private readonly Background Background = background;
 
     public override void Draw(PageRenderer renderer, int layer) {
         // Background is drawn in layer -1
@@ -45,6 +42,6 @@ public class DrawBackground : DrawCommand {
 
     private int Layer => GetLayerCode(
         -1,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0
+        LayerProperty
     );
 }

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with OSMRender. If not, see <https://www.gnu.org/licenses/>.
 
-using System.Globalization;
 using OSMRender.Geo;
+using OSMRender.Utils;
 using VectSharp;
 
 namespace OSMRender.Render.Commands;
@@ -29,8 +29,8 @@ public abstract class DrawCommand {
 
     public Bounds Bounds => Obj.Bounds;
 
-    public float MinZoom => Properties.ContainsKey("min-zoom") ? float.Parse(Properties["min-zoom"], CultureInfo.InvariantCulture) : 0;
-    public float MaxZoom => Properties.ContainsKey("max-zoom") ? float.Parse(Properties["max-zoom"], CultureInfo.InvariantCulture) : 100;
+    public double MinZoom => Properties.ContainsKey("min-zoom") ? Properties["min-zoom"].ParseInvariantDouble() : 0;
+    public double MaxZoom => Properties.ContainsKey("max-zoom") ? Properties["max-zoom"].ParseInvariantDouble() : 100;
 
     public DrawCommand(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) {
         Properties = new Dictionary<string, string>();
@@ -40,7 +40,7 @@ public abstract class DrawCommand {
         Obj = obj;
     }
 
-    protected void StrokePath(GraphicsPath path, PageRenderer renderer, string prefix, float baseWidth=0f) {
+    protected void StrokePath(GraphicsPath path, PageRenderer renderer, string prefix, double baseWidth=0) {
         var lineStyle = GetString($"{prefix}-style");
         var lineJoinStyle = GetString($"line-join");
         var lineCapStyle = GetString($"{prefix}-end-cap");
@@ -94,7 +94,7 @@ public abstract class DrawCommand {
             if (parts.Length == 3) {
                 var colour1 = Colour.FromCSSString(parts[0]) ?? defaultColour ?? Colour.FromRgb(0, 0, 0);
                 var colour2 = Colour.FromCSSString(parts[1]) ?? defaultColour ?? Colour.FromRgb(0, 0, 0);
-                var ratio = ParseFloat(parts[2], 1f);
+                var ratio = ParseDouble(parts[2], 1f);
                 colour = Colour.FromRgba(
                     colour1.R * (1-ratio) + colour2.R * ratio,
                     colour1.G * (1-ratio) + colour2.G * ratio,
@@ -162,34 +162,34 @@ public abstract class DrawCommand {
         }
     }
 
-    protected float GetNum(string property, int zoomLevel, float baseVal = 0f, float defaultValue = 0f) {
+    protected double GetNum(string property, int zoomLevel, double baseVal = 0, double defaultValue = 0) {
         if (Properties.ContainsKey(property)) {
             var val = Properties[property];
             if (val.Contains(':')) {
-                float ans = 0;
+                double ans = 0;
                 foreach (var pair in val.Split(';')) {
-                    float level = float.Parse(pair.Substring(0, pair.IndexOf(':')), CultureInfo.InvariantCulture);
-                    float value = ParseFloat(pair.Substring(pair.IndexOf(':')+1), baseVal);
+                    double level = pair.Substring(0, pair.IndexOf(':')).ParseInvariantDouble();
+                    double value = ParseDouble(pair.Substring(pair.IndexOf(':')+1), baseVal);
                     if (zoomLevel >= level) {
                         ans = value;
                     }
                 }
                 return ans;
             } else {
-                return ParseFloat(val, baseVal);
+                return ParseDouble(val, baseVal);
             }
         } else {
             return defaultValue;
         }
     }
 
-    protected static float ParseFloat(string val, float baseVal) {
+    protected static double ParseDouble(string val, double baseVal) {
         if (val.EndsWith("%")) {
             val = val.Substring(0, val.Length - 1).Trim();
-            float value = float.Parse(val, CultureInfo.InvariantCulture);
-            return value / 100f * baseVal;
+            double value = val.ParseInvariantDouble();
+            return value / 100 * baseVal;
         } else {
-            float value = float.Parse(val, CultureInfo.InvariantCulture);
+            double value = val.ParseInvariantDouble();
             return value;
         }
     }
@@ -229,6 +229,21 @@ public abstract class DrawCommand {
 
     protected static int GetLayerCode(int layer, int sublayer, int subsublayer) {
         return layer * 10000 + 100 * sublayer + subsublayer;
+    }
+
+    protected int LayerProperty {
+        get {
+            try {
+                if (Obj.Tags is not null && Obj.Tags.ContainsKey("layer")) {
+                    var layerString = Obj.Tags["layer"];
+                    layerString = layerString.Contains(';') ? layerString.Substring(0, layerString.IndexOf(';')) : layerString;
+                    return layerString.ParseInvariantInt();
+                }
+                return 0;
+            } catch (FormatException) {
+                return 0;
+            }
+        }
     }
 
     public abstract void Draw(PageRenderer renderer, int layer);

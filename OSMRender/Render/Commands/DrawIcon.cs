@@ -20,13 +20,10 @@ using BigGustave;
 
 namespace OSMRender.Render.Commands;
 
-public class DrawIcon : DrawCommand {
+public class DrawIcon(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : DrawCommand(properties, importance, feature, obj) {
 
-    private static Dictionary<string, RasterImage> ImageCache = [];
+    private static readonly Dictionary<string, RasterImage> ImageCache = [];
     public static string SearchPath { get; set; } = "";
-    
-    public DrawIcon(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : base(properties, importance, feature, obj) {
-    }
 
     public override void Draw(PageRenderer renderer, int layer) {
         if (layer != Layer) return;
@@ -83,6 +80,6 @@ public class DrawIcon : DrawCommand {
 
     private int Layer => GetLayerCode(
         2,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0
+        LayerProperty
     );
 }

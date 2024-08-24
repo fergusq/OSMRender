@@ -139,18 +139,22 @@ public class Renderer {
         Dictionary<int, List<DrawCommand>> layers = [];
         foreach (var cmd in doc.DrawCommands)
         {
-            if (ZoomLevel < cmd.MinZoom || ZoomLevel > cmd.MaxZoom)
-            {
-                continue;
-            }
-            foreach (var layer in cmd.GetLayers())
-            {
-                if (!layers.ContainsKey(layer))
+            try {
+                if (ZoomLevel < cmd.MinZoom || ZoomLevel > cmd.MaxZoom)
                 {
-                    layers[layer] = [];
+                    continue;
                 }
+                foreach (var layer in cmd.GetLayers())
+                {
+                    if (!layers.ContainsKey(layer))
+                    {
+                        layers[layer] = [];
+                    }
 
-                layers[layer].Add(cmd);
+                    layers[layer].Add(cmd);
+                }
+            } catch (Exception e) {
+                Logger.Error("Error while determining layers of draw command: " + e.ToString());
             }
         }
         foreach (var layer in layers)
@@ -173,10 +177,14 @@ public class Renderer {
             //Console.WriteLine($"Drawing layer {layer}...");
             foreach (var cmd in layers[layer].AsEnumerable().Reverse())
             {
-                if (cmd.Bounds.Overlaps(bounds))
-                {
-                    cmd.Draw(pageRenderer, layer);
-                    empty = false;
+                try {
+                    if (cmd.Bounds.Overlaps(bounds))
+                    {
+                        cmd.Draw(pageRenderer, layer);
+                        empty = false;
+                    }
+                } catch (Exception e) {
+                    Logger.Error("Error while executing draw command: " + e.ToString());
                 }
             }
         }

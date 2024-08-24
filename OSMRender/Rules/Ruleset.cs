@@ -23,7 +23,8 @@ namespace OSMRender.Rules;
 /// <summary>
 /// A ruleset contains feature declarations and target rules. Its Apply method can be used to add draw commands to a GeoDocument.
 /// </summary>
-public class Ruleset {
+public class Ruleset(ILogger logger) {
+
     public interface IQuery {
         public bool Matches(GeoDocument doc, GeoObj obj);
     }
@@ -33,32 +34,18 @@ public class Ruleset {
         public void Apply(GeoDocument doc, Feature feature, State state);
     }
 
-    public readonly struct Feature {
-        public readonly string Name;
-        public readonly GeoObj Obj;
-
-        public Feature(string name, GeoObj obj) {
-            Name = name;
-            Obj = obj;
-        }
+    public readonly struct Feature(string name, GeoObj obj) {
+        public readonly string Name = name;
+        public readonly GeoObj Obj = obj;
     }
 
-    public IDictionary<string, IQuery> PointFeatures { get; set; }
-    public IDictionary<string, IQuery> LineFeatures { get; set; }
-    public IDictionary<string, IQuery> AreaFeatures { get; set; }
-    public IDictionary<string, string> Properties { get; set; }
-    public IList<IRule> Rules { get; set; }
+    public IDictionary<string, IQuery> PointFeatures { get; set; } = new Dictionary<string, IQuery>();
+    public IDictionary<string, IQuery> LineFeatures { get; set; } = new Dictionary<string, IQuery>();
+    public IDictionary<string, IQuery> AreaFeatures { get; set; } = new Dictionary<string, IQuery>();
+    public IDictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
+    public IList<IRule> Rules { get; set; } = [];
 
-    private readonly ILogger Logger;
-
-    public Ruleset(ILogger logger) {
-        PointFeatures = new Dictionary<string, IQuery>();
-        LineFeatures = new Dictionary<string, IQuery>();
-        AreaFeatures = new Dictionary<string, IQuery>();
-        Properties = new Dictionary<string, string>();
-        Rules = [];
-        Logger = logger;
-    }
+    private readonly ILogger Logger = logger;
 
     /// <summary>
     /// Constructs the feature database and evaluates all rules for all features, adding draw commands for each evaluated draw statement to the GeoDocument object.

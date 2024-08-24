@@ -60,8 +60,8 @@ public static class OsmXmlParser {
             relations[id] = new Relation(id, tags) /*{ Members = members.ToList() }*/;
             if (tags.ContainsKey("type") && tags["type"] == "multipolygon") {
                 areas[id] = new Area(id, tags) {
-                    OuterEdges = members.Where(m => m.Role == "outer").Select(m => new List<Point>(((Line) m.Value).Nodes)).ToList(),
-                    InnerEdges = members.Where(m => m.Role == "inner").Select(m => new List<Point>(((Line) m.Value).Nodes)).ToList()
+                    OuterEdges = members.Where(m => m.Role == "outer" && m.Value is Line).Select(m => new List<Point>(((Line) m.Value).Nodes)).ToList(),
+                    InnerEdges = members.Where(m => m.Role == "inner" && m.Value is Line).Select(m => new List<Point>(((Line) m.Value).Nodes)).ToList()
                 };
             }
         }

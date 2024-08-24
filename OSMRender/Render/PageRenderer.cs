@@ -22,21 +22,21 @@ namespace OSMRender.Render;
 /// <summary>
 /// A helper class instantiated by Renderer that represents a single tile or image being generated.
 /// </summary>
-public class PageRenderer {
+public class PageRenderer(Renderer renderer, Page page, ILogger logger, int tileX, int tileY, int tileWidth = 1, int tileHeight = 1) {
 
-    public Renderer Renderer { get; set; }
+    public Renderer Renderer { get; set; } = renderer;
 
-    public Page Page { get; set; }
+    public Page Page { get; set; } = page;
 
     public Graphics Graphics => Page.Graphics;
 
-    public int TileX { get; set; }
-    public int TileY { get; set; }
+    public int TileX { get; set; } = tileX;
+    public int TileY { get; set; } = tileY;
 
-    public int TileWidth { get; set; }
-    public int TileHeight { get; set; }
+    public int TileWidth { get; set; } = tileWidth;
+    public int TileHeight { get; set; } = tileHeight;
 
-    internal ILogger Logger;
+    internal ILogger Logger = logger;
 
     public Geo.Bounds TileBounds => Geo.Bounds.From(
         Renderer.TileNumberToLatitude(TileY + TileHeight),
@@ -44,16 +44,6 @@ public class PageRenderer {
         Renderer.TileNumberToLongitude(TileX),
         Renderer.TileNumberToLongitude(TileX + TileWidth)
     );
-
-    public PageRenderer(Renderer renderer, Page page, ILogger logger, int tileX, int tileY, int tileWidth = 1, int tileHeight = 1) {
-        Renderer = renderer;
-        Page = page;
-        TileX = tileX;
-        TileY = tileY;
-        TileWidth = tileWidth;
-        TileHeight = tileHeight;
-        Logger = logger;
-    }
 
     public double LongitudeToX(double longitude) {
         var x = Renderer.LongitudeToTileNumber(longitude);

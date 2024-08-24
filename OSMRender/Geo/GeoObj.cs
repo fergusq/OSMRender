@@ -21,15 +21,10 @@ namespace OSMRender.Geo;
 /// <summary>
 /// Represents a point (node), line (way), area (way/relation), or the background of the map.
 /// </summary>
-public abstract class GeoObj {
-    public long Id { get; set; }
+public abstract class GeoObj(long id, IDictionary<string, string> tags) {
+    public long Id { get; set; } = id;
 
-    public ImmutableDictionary<string, string> Tags { get; set; }
-
-    protected GeoObj(long id, IDictionary<string, string> tags) {
-        Id = id;
-        Tags = tags.ToImmutableDictionary();
-    }
+    public ImmutableDictionary<string, string> Tags { get; set; } = tags.ToImmutableDictionary();
 
     public abstract Bounds Bounds { get; }
 }

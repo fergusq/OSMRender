@@ -112,6 +112,6 @@ public class DrawText : LineDrawCommand {
 
     private int Layer => GetLayerCode(
         3,
-        Obj.Tags is not null && Obj.Tags.ContainsKey("layer") ? int.Parse(Obj.Tags["layer"]) : 0
+        LayerProperty
     );
 }

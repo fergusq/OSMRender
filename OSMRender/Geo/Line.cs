@@ -19,17 +19,13 @@ namespace OSMRender.Geo;
 /// <summary>
 /// A GeoObj corresponding to an OSM way.
 /// </summary>
-public class Line : GeoObj, IMergeableLine {
+public class Line(long id, IDictionary<string, string> tags) : GeoObj(id, tags), IMergeableLine {
 
-    public List<Point> Nodes { get; set; }
+    public List<Point> Nodes { get; set; } = [];
 
     public long MergeableLineId => Id;
 
     public IDictionary<string, string> MergeableLineProperties => Tags;
 
     public override Bounds Bounds => Nodes.Select(n => n.Bounds).Aggregate((a, b) => a.MergeWith(b));
-
-    public Line(long id, IDictionary<string, string> tags) : base(id, tags) {
-        Nodes = [];
-    }
 }
