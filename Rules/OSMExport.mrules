@@ -12,36 +12,27 @@ features
 	points, areas
 		parking : amenity=parking
 		fuel : amenity=fuel
-		postbox : amenity=post_box
-		postoffice : amenity=post_office
-		telephone : amenity=telephone
-		fire station : amenity=fire_station
-		police station : amenity=police
-		prison : amenity=prison
 		hospital : amenity=hospital
-		recycling : amenity=recycling
-		church : amenity=place_of_worship AND religion=christian
-		drinking water : amenity=drinking_water
-		bank : amenity=bank
-		atm : amenity=atm
-		toilets : amenity=toilets
-		library : amenity=library
-		tree : natural=tree
-	//	school : amenity=school
-		bus stop : highway=bus_stop
-		railway station : railway=station
-		public_transport station : public_transport=station
-		mini roundabout : highway=mini_roundabout
-		gate : barrier=gate
-		tourism viewpoint : tourism=viewpoint
-		tourism hotel : tourism=hotel
-		tourism museum : tourism=museum
-		amenity pub : amenity=pub
-		amenity fast_food : amenity=fast_food
-		amenity restaurant : amenity=restaurant
-		amenity cafe : amenity=cafe
-		aerodrome : aeroway=aerodrome
-		housenumber : [addr:housenumber]
+		pharmacy : amenity=pharmacy
+
+		amenity postbox : amenity=post_box
+		amenity postoffice : amenity=post_office
+		amenity telephone : amenity=telephone
+		amenity fire station : amenity=fire_station
+		amenity police station : amenity=police
+		amenity prison : amenity=prison
+		amenity recycling : amenity=recycling
+		amenity church : amenity=place_of_worship AND religion=christian
+		amenity drinking water : amenity=drinking_water
+		amenity bank : amenity=bank
+		amenity atm : amenity=atm
+		amenity toilets : amenity=toilets
+		amenity library : amenity=library
+		amenity food pub : amenity=pub
+		amenity food fast_food : amenity=fast_food
+		amenity food restaurant : amenity=restaurant
+		amenity food cafe : amenity=cafe
+
 		shop diy : shop=doityourself
 		shop hair dresser : shop=hairdresser
 		shop supermarket : shop=supermarket OR shop=food
@@ -55,7 +46,19 @@ features
 		shop electronics : shop=electronics
 		shop furniture : shop=furniture
 		shop gift : shop=gift
-		pharmacy : amenity=pharmacy
+
+		tree : natural=tree
+	//	school : amenity=school
+		bus stop : highway=bus_stop
+		railway station : railway=station
+		public_transport station : public_transport=station
+		mini roundabout : highway=mini_roundabout
+		gate : barrier=gate
+		tourism viewpoint : tourism=viewpoint
+		tourism hotel : tourism=hotel
+		tourism museum : tourism=museum
+		aerodrome : aeroway=aerodrome
+		housenumber : [addr:housenumber]
 		substation : power=substation
 		office : office
 		puffin : crossing_ref=puffin
@@ -75,7 +78,7 @@ features
 		glacier : natural=glacier
 		national park : boundary=national_park
 		allotments : landuse=allotments
-		academic : node[@isOneOf(amenity, university, college, school)] area[@isOneOf(amenity, university, college, school)]
+		academic : node[@isOneOf(amenity, university, college, school)] area[@isOneOf(amenity, university, college, school) OR @isOneOf(building, university, college, school)]
 		meadow : natural=meadow OR landuse=meadow
 		nature reserve : leisure=nature_reserve
 		playground : leisure=playground
@@ -535,12 +538,6 @@ rules
 			draw : fill
 		for : amenity=hospital
 			stop
-		define
-			min-zoom : 17
-		if:academic
-			define
-				min-zoom:16
-		draw : text
 
 //		aeroway taxiway : aeroway=taxiway
 //		aeroway apron : aeroway=apron
@@ -1237,43 +1234,6 @@ rules
 			text-color : #7981B0
 			text-offset-vertical : -150%
 		draw : text
-	target: postbox
-		define
-			icon-image : icons/SJJB/png/amenity_post_box.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-	target: postoffice
-		define
-			icon-image : icons/SJJB/png/amenity_post_office.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-		define
-			min-zoom : 17
-			text-color : #734a08
-			text-offset-vertical : 150%
-			font-size : 10
-		draw : text
-	target: telephone
-		define
-			icon-image : icons/SJJB/png/amenity_telephone.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-
-	target: fire station
-		define
-			icon-image : icons/SJJB/png/amenity_firestation.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-		define
-			min-zoom : 17
-			text-color : #734a08
-			text-offset-vertical : 150%
-			font-size : 10
-		draw : text
 	target: hospital
 		define
 			icon-image : icons/SJJB/png/health_hospital.p.32.png
@@ -1285,36 +1245,6 @@ rules
 			text-offset-vertical : 150%
 			text-color : #DA0092
 		draw : text
-	target: police station
-		define
-			icon-image : icons/SJJB/png/amenity_police.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-		define
-			min-zoom : 17
-			text-color : #734a08
-			text-offset-vertical : 150%
-			font-size : 10
-		draw : text
-	target: prison
-		define
-			icon-image : icons/SJJB/png/amenity_prison.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-		define
-			min-zoom : 17
-			text-color : #734a08
-			text-offset-vertical : 150%
-			font-size : 10
-		draw : text
-	target: recycling
-		define
-			icon-image : icons/SJJB/png/amenity_recycling.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
 	target: shop*
 		define
 			min-zoom : 18
@@ -1394,50 +1324,6 @@ rules
 			min-zoom : 16
 			icon-width : 9
 		draw : icon
-	target: church
-		define
-			icon-image : icons/SJJB/png/place_of_worship_christian3.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		define
-			text-offset-vertical : 150%
-		draw : text
-		draw : icon
-	target: drinking water
-		define
-			icon-image : icons/SJJB/png/food_drinkingtap.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-	target: bank
-		define
-			min-zoom : 18
-			text-color : #000000
-			text-offset-vertical : 150%
-		draw : text
-		define
-			icon-image : icons/SJJB/png/money_bank2.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-	target: atm
-		define
-			min-zoom : 18
-			text-color : #000000
-			text-offset-vertical : 150%
-		draw : text
-		define
-			icon-image : icons/SJJB/png/money_atm2.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-
-	target: toilets
-		define
-			icon-image : icons/SJJB/png/amenity_toilets.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
 	target: pharmacy
 		define
 			min-zoom : 18
@@ -1447,12 +1333,6 @@ rules
 		draw : text
 		define
 			icon-image : icons/SJJB/png/health_pharmacy.p.32.png
-			min-zoom : 16
-			icon-width : 16
-		draw : icon
-	target: library
-		define
-			icon-image : icons/SJJB/png/amenity_library.p.32.png
 			min-zoom : 16
 			icon-width : 16
 		draw : icon
@@ -1552,20 +1432,67 @@ rules
 			text-offset-vertical : 150%
 		draw : text
 
-		// A small circle shown instead of icon on zoom level 16
-		define
-			min-zoom : 16
-			max-zoom : 16
-			shape : circle
-			shape-size : 5
-			fill-color : #734a08
-		draw : shape
+		if: amenity food*
+			// A small circle shown instead of icon on zoom level 16
+			define
+				min-zoom : 16
+				max-zoom : 16
+				shape : circle
+				shape-size : 5
+				fill-color : #734a08
+			draw : shape
+
+			define
+				min-zoom : 17
+				max-zoom : 20
+		else
+			// non-food will be shown as icon at 16
+			define
+				min-zoom : 16
+				max-zoom : 20
 
 		define
-			min-zoom : 17
-			max-zoom : 20
 			icon-width : 16
-		if : *pub
+		if: *postbox
+			define
+				icon-image : icons/SJJB/png/amenity_post_box.p.32.png
+		elseif: *postoffice
+			define
+				icon-image : icons/SJJB/png/amenity_post_office.p.32.png
+		elseif: *telephone
+			define
+				icon-image : icons/SJJB/png/amenity_telephone.p.32.png
+		elseif: *fire station
+			define
+				icon-image : icons/SJJB/png/amenity_firestation.p.32.png
+		elseif: *police station
+			define
+				icon-image : icons/SJJB/png/amenity_police.p.32.png
+		elseif: *prison
+			define
+				icon-image : icons/SJJB/png/amenity_prison.p.32.png
+		elseif: *recycling
+			define
+				icon-image : icons/SJJB/png/amenity_recycling.p.32.png
+		elseif: *church
+			define
+				icon-image : icons/SJJB/png/place_of_worship_christian3.p.32.png
+		elseif: *drinking water
+			define
+				icon-image : icons/SJJB/png/food_drinkingtap.p.32.png
+		elseif: b*ank
+			define
+				icon-image : icons/SJJB/png/money_bank2.p.32.png
+		elseif: *atm
+			define
+				icon-image : icons/SJJB/png/money_atm2.p.32.png
+		elseif: *toilets
+			define
+				icon-image : icons/SJJB/png/amenity_toilets.p.32.png
+		elseif: *library
+			define
+				icon-image : icons/SJJB/png/amenity_library.p.32.png
+		elseif : *pub
 			define
 				icon-image : icons/SJJB/png/food_pub.p.32.png
 		elseif : *fast_food
@@ -1608,3 +1535,11 @@ rules
 			line-color : #B5D0D0
 			line-width : 2
 		draw : line
+
+	target: $featuretype(area)
+		define
+			min-zoom : 17
+		if:academic
+			define
+				min-zoom:16
+		draw : text
