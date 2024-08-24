@@ -20,38 +20,42 @@ using VectSharp.Filters;
 
 namespace OSMRender.Render.Commands;
 
-public class DrawFill(IDictionary<string, string> properties, int importance, string feature, Area obj) : DrawCommand(properties, importance, feature, obj) {
+public class DrawFill(IDictionary<string, string> properties, int importance, string feature, Area obj, bool isLine = false) : DrawCommand(properties, importance, feature, obj) {
 
     private readonly Area Area = obj;
+
+    private readonly bool IsLine = isLine;
 
     public override void Draw(PageRenderer renderer, int layer) {
         // Areas are all drawn in layer 0
         if (layer != Layer) return;
 
-        List<GraphicsPath> paths = [];
-        foreach (var outer in Area.OuterEdges) {
-            paths.Add(NodesToPath(renderer, outer));
-        }
+        if (IsLine) {
+            List<GraphicsPath> paths = [];
+            Area.OuterEdges.ForEach(edge => paths.Add(NodesToPath(renderer, edge)));
+            Area.InnerEdges.ForEach(edge => paths.Add(NodesToPath(renderer, edge)));
 
-        // Construct a mask where the background is white (visible) and inner polygons are black (invisible)
-        Graphics mask = new();
-        var (point, size) = GetPageBounds(renderer);
-        mask.FillRectangle(point, size, Colours.White);
-        foreach (var inner in Area.InnerEdges) {
-            mask.FillPath(NodesToPath(renderer, inner), Colours.Black);
-        }
-
-        Graphics output = new();
-        foreach (var path in paths) {
-            output.FillPath(path, GetColour("fill-color", "fill-opacity"));
-        }
-
-        renderer.Graphics.DrawGraphics(0, 0, output, new MaskFilter(mask));
-
-        foreach (var path in paths) {
-            if (GetString("border-style") != "") {
-                StrokePath(path, renderer, "border");
+            foreach (var path in paths) {
+                StrokePath(path, renderer, "line");
             }
+        } else {
+            List<GraphicsPath> paths = [];
+            Area.OuterEdges.ForEach(edge => paths.Add(NodesToPath(renderer, edge)));
+
+            // Construct a mask where the background is white (visible) and inner polygons are black (invisible)
+            Graphics mask = new();
+            var (point, size) = GetPageBounds(renderer);
+            mask.FillRectangle(point, size, Colours.White);
+            foreach (var inner in Area.InnerEdges) {
+                mask.FillPath(NodesToPath(renderer, inner), Colours.Black);
+            }
+
+            Graphics output = new();
+            foreach (var path in paths) {
+                output.FillPath(path, GetColour("fill-color", "fill-opacity"));
+            }
+
+            renderer.Graphics.DrawGraphics(0, 0, output, new MaskFilter(mask));
         }
     }
 

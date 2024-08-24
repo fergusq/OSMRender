@@ -804,18 +804,22 @@ public class Parser {
             Logger.Debug($"Drawing {feature.Name} {feature.Obj.Id} as {Type} with Importance={Importance}, {string.Join(", ", state.Properties.Select(p => p.Key + "=" + p.Value))}");
             switch (Type) {
             case "fill":
-                if (feature.Obj is not Area) {
+                if (feature.Obj is Area area) {
+                    doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, feature.Name, area));
+                } else {
                     Logger.Warning($"{feature.Name}: draw:fill is only supported for areas");
                     throw new StopException();
                 }
-                doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, feature.Name, (Area) feature.Obj));
                 break;
             case "line":
-                if (feature.Obj is not Line) {
+                if (feature.Obj is Line line) {
+                    doc.DrawCommands.Add(new DrawLine(state.Properties, Importance, feature.Name, line));
+                } else if (feature.Obj is Area area2) {
+                    doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, feature.Name, area2, isLine: true));
+                } else {
                     Logger.Warning($"{feature.Name}: draw:line is only supported for lines");
                     throw new StopException();
                 }
-                doc.DrawCommands.Add(new DrawLine(state.Properties, Importance, feature.Name, (Line) feature.Obj));
                 break;
             case "shape":
                 doc.DrawCommands.Add(new DrawShape(state.Properties, Importance, feature.Name, feature.Obj));

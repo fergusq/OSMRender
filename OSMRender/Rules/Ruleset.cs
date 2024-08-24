@@ -51,6 +51,7 @@ public class Ruleset(ILogger logger) {
     /// Constructs the feature database and evaluates all rules for all features, adding draw commands for each evaluated draw statement to the GeoDocument object.
     /// </summary>
     /// <param name="doc">the GeoDocument for which the rules are evaluated and DrawCommands of which are modified</param>
+    /// <param name="filters">if nonempty, only map features matching these queries will be included in the map</param>
     public void Apply(GeoDocument doc, IEnumerable<IQuery>? filters = null) {
         var features = new List<Feature>();
         foreach (var point in doc.Points) {
@@ -87,7 +88,26 @@ public class Ruleset(ILogger logger) {
                 }
             }
         }
+        
+        // Merge shapes and texts
         doc.CombineAdjacentLineDraws();
+
+        // Remove multiple same texts on same object
+        HashSet<(long, string)> texts = [];
+        foreach (var cmd in doc.DrawCommands) {
+            if (cmd is DrawText text) {
+                if (text.Disabled) {
+                    continue;
+                }
+                var key = (text.Obj.Id, text.Text);
+                if (texts.Contains(key)) {
+                    text.Disabled = true;
+                } else {
+                    texts.Add(key);
+                }
+            }
+        }
+
         doc.DrawCommands.Add(new DrawBackground(new State(this).Properties, 0, "background", new Background(-1, new Dictionary<string, string>(), doc.Bounds)));
     }
 }

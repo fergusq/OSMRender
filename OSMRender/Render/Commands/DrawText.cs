@@ -23,17 +23,19 @@ public class DrawText : LineDrawCommand {
 
     private readonly static double LINE_TEXT_INTERVAL = 400;
 
-    private readonly bool Disabled = false;
+    internal bool Disabled = false;
+
+    internal readonly string Text = "";
 
     public DrawText(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) : base(properties, importance, feature, obj) {
         if (Properties.TryGetValue("text", out var key) && key is not null) {
             if (Obj.Tags.ContainsKey(key)) {
-                Properties["text"] = Obj.Tags[key];
+                Text = Obj.Tags[key];
             } else {
                 Disabled = true; // TODO we should parse the expression with [[addr:housenum]] and @if() etc.
             }
         } else if (Obj.Tags.TryGetValue("name", out var name) && name is not null) {
-            Properties["text"] = name;
+            Text = name;
         }
     }
 
@@ -41,14 +43,6 @@ public class DrawText : LineDrawCommand {
         if (layer != Layer || Disabled) {
             return;
         }
-
-        string text;
-        if (Properties.TryGetValue("text", out var key) && key is not null) {
-            text = key;
-        } else {
-            return;
-        }
-        
 
         FontFamily fontFamily = FontFamily.ResolveFontFamily(FontFamily.StandardFontFamilies.Helvetica);
         //if (Properties.TryGetValue("font-family", out var family)) {
@@ -86,9 +80,9 @@ public class DrawText : LineDrawCommand {
 
             for (int i = 0; i < n; i++) {
                 if (halo > 0) { // TODO halo widths
-                    renderer.Graphics.StrokeTextOnPath(path, text, font, haloColour, reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle, lineWidth: 1);
+                    renderer.Graphics.StrokeTextOnPath(path, Text, font, haloColour, reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle, lineWidth: 1);
                 }
-                renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color", "text-opacity"), reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle);
+                renderer.Graphics.FillTextOnPath(path, Text, font, GetColour("text-color", "text-opacity"), reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle);
             }
             return;
         } else if (TryGetCoordinates(out double lat, out double lon)) {
@@ -100,9 +94,9 @@ public class DrawText : LineDrawCommand {
             path.LineTo(x-1, y);
             path.LineTo(x+1, y);
             if (halo > 0) { // TODO halo widths
-                renderer.Graphics.StrokeTextOnPath(path, text, font, haloColour, reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle, lineWidth: 1);
+                renderer.Graphics.StrokeTextOnPath(path, Text, font, haloColour, reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle, lineWidth: 1);
             }
-            renderer.Graphics.FillTextOnPath(path, text, font, GetColour("text-color", "text-opacity"), reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle);
+            renderer.Graphics.FillTextOnPath(path, Text, font, GetColour("text-color", "text-opacity"), reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle);
         }
     }
 
