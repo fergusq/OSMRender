@@ -37,6 +37,7 @@ public class DrawText : LineDrawCommand {
         } else if (Obj.Tags.TryGetValue("name", out var name) && name is not null) {
             Text = name;
         }
+        Properties["__text__"] = Text;
     }
 
     public override void Draw(PageRenderer renderer, int layer) {
