@@ -10,10 +10,10 @@ Run `dotnet build` in the OSMRenderApp directory.
 
 ## Using
 
-To get started, download some data from the OpenStreetMap API:
+To get started, download some data from the Overpass API:
 
 ```sh
-wget -O helsinki.osm "https://api.openstreetmap.org/api/0.6/map?bbox=24.94,60.16,24.96,60.18"
+wget -O helsinki.osm "https://overpass-api.de/api/map?bbox=24.94,60.16,24.96,60.18"
 ```
 
 To simply view the map, the easiest way is to start the tile server:
@@ -48,6 +48,10 @@ OSMRender is a clone of [Maperitive](http://maperitive.net) and implements the s
 ## License
 
 OSMRender is licensed under GNU GPL version 3 or later. However, the part of the program that renders vector graphics to PNGs uses a library (VectSharp.Raster) licensed under AGPLv3. Due to this reason, **the code under OSMRenderApp, as a whole, is licensed under AGPLv3.** If you only use the OSMRender library and not anything under OSMRenderApp directory, you can safely use the GPLv3 license. Also, since my code is licensed under GPLv3, you are free to make a fork of OSMRenderApp that removes that dependency if you wish.
+
+OSMExport.mrules is a modified version of Default.mrules by Igor Brejc and is licensed under the CC BY-SA 3.0 license.
+
+The example image below is based on OpenStreetMap data and follows their [license conditions](https://www.openstreetmap.org/copyright).
 
 ## Example
 
