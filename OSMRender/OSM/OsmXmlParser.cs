@@ -71,8 +71,10 @@ public static class OsmXmlParser {
             }
         }
 
-        var bounds = xml.Root.Descendants("bounds")
-            .Select(b => Bounds.From(
+        var boundsElems = xml.Root.Descendants("bounds");
+
+        Bounds? bounds = boundsElems.Count() == 0 ? null :
+            boundsElems.Select(b => Bounds.From(
                 minLat: b.Attribute("minlat").Value.ParseInvariantDouble(),
                 minLon: b.Attribute("minlon").Value.ParseInvariantDouble(),
                 maxLat: b.Attribute("maxlat").Value.ParseInvariantDouble(),
