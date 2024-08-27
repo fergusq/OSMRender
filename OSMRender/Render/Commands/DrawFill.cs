@@ -36,7 +36,13 @@ public class DrawFill(IDictionary<string, string> properties, int importance, st
             Area.InnerEdges.ForEach(edge => paths.Add(NodesToPath(renderer, edge)));
 
             foreach (var path in paths) {
-                StrokePath(path, renderer, "line");
+                StrokePath(path, renderer, border: false);
+            }
+        } else if (Area.InnerEdges.Count == 0) {
+            List<GraphicsPath> paths = [];
+            Area.OuterEdges.ForEach(edge => paths.Add(NodesToPath(renderer, edge)));
+            foreach (var edge in Area.OuterEdges) {
+                renderer.Graphics.FillPath(NodesToPath(renderer, edge), RenderingProperties.GetFillColorFor(renderer.Renderer.ZoomLevel));
             }
         } else {
             List<GraphicsPath> paths = [];
@@ -52,7 +58,7 @@ public class DrawFill(IDictionary<string, string> properties, int importance, st
 
             Graphics output = new();
             foreach (var path in paths) {
-                output.FillPath(path, GetColour("fill-color", "fill-opacity"));
+                output.FillPath(path, RenderingProperties.GetFillColorFor(renderer.Renderer.ZoomLevel));
             }
 
             renderer.Graphics.DrawGraphics(0, 0, output, new MaskFilter(mask));

@@ -29,13 +29,12 @@ public class DrawShape(IDictionary<string, string> properties, int importance, s
         if (layer != Layer) return;
 
         List<GraphicsPath> paths = [];
-        Colour fillColour = GetColour("fill-color", "fill-opacity");
-        Colour pathColour = GetColour("border-color", "border-opacity", defaultColour: GetColour("line-color", "line-opacity", defaultColour: fillColour));
+        Colour fillColour = RenderingProperties.GetFillColorFor(renderer.Renderer.ZoomLevel);
+        Colour pathColour = Properties.ContainsKey("line-color") ? RenderingProperties.GetLineColorFor(renderer.Renderer.ZoomLevel) : fillColour;
         double pathWidth = 1.0;
         GraphicsPath path = new();
-        var shape = GetString("shape");
-        if (shape == "custom") {
-            var def = Properties["shape-def"].Replace(" ", "").Split(';');
+        if (RenderingProperties.Shape == RenderingProperties.Shapes.Custom) {
+            var def = RenderingProperties.ShapeDef.Replace(" ", "").Split(';');
             foreach (var command in def) {
                 if (command.StartsWith("p:")) {
                     pathColour = Colour.FromCSSString(command.Substring(2)) ?? pathColour;
@@ -80,39 +79,36 @@ public class DrawShape(IDictionary<string, string> properties, int importance, s
                 path.Close();
                 paths.Add(path);
             }
-        } else if (shape == "square") {
+        } else if (RenderingProperties.Shape == RenderingProperties.Shapes.Square) {
             path.MoveTo(-1, -1);
             path.LineTo(1, -1);
             path.LineTo(1, 1);
             path.LineTo(-1, 1);
             path.Close();
             paths.Add(path);
-        } else if (shape == "diamond") {
+        } else if (RenderingProperties.Shape == RenderingProperties.Shapes.Diamond) {
             path.MoveTo(0, -1);
             path.LineTo(-1, 0);
             path.LineTo(0, 1);
             path.LineTo(1, 0);
             path.Close();
             paths.Add(path);
-        } else if (shape == "triangle") {
+        } else if (RenderingProperties.Shape == RenderingProperties.Shapes.Triangle) {
             path.MoveTo(-0.5, 0);
             path.LineTo(0, -0.75);
             path.LineTo(0.5, 0);
             path.Close();
             paths.Add(path);
-        } else if (shape == "circle") {
+        } else if (RenderingProperties.Shape == RenderingProperties.Shapes.Circle) {
             path.Arc(0, 0, 1, 0, 2*Math.PI);
             paths.Add(path);
         } else {
-            renderer.Logger.Error($"{Feature}: Unknown shape `{shape}'");
+            renderer.Logger.Error($"{Feature}: Unknown shape `{RenderingProperties.Shape}'");
             return;
         }
 
-        var size = Properties.ContainsKey("shape-size") ? GetNum("shape-size", renderer.Renderer.ZoomLevel) : 1;
-        double angleOffset = 0;
-        if (Properties.ContainsKey("angle")) {
-            angleOffset = GetNum("angle", renderer.Renderer.ZoomLevel) / 180 * Math.PI;
-        }
+        var size = RenderingProperties.ShapeSize.GetFor(renderer.Renderer.ZoomLevel);
+        double angleOffset = RenderingProperties.Angle.GetFor(renderer.Renderer.ZoomLevel) / 180 * Math.PI;
 
         if (Obj is Line) {
             var linePath = new GraphicsPath();
@@ -120,7 +116,7 @@ public class DrawShape(IDictionary<string, string> properties, int importance, s
                 linePath.LineTo(renderer.LongitudeToX(node.Longitude), renderer.LatitudeToY(node.Latitude));
             }
 
-            var shapeInterval = size * GetNum("shape-spacing", renderer.Renderer.ZoomLevel, defaultValue: LINE_SHAPE_INTERVAL/size);
+            var shapeInterval = size * (Properties.ContainsKey("shape-spacing") ? RenderingProperties.ShapeSpacing.GetFor(renderer.Renderer.ZoomLevel) : LINE_SHAPE_INTERVAL/size);
             var minShapeLen = shapeInterval / 2;
 
             // Draw shape along the line at intervals of shapeInterval units

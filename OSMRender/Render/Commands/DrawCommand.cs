@@ -27,87 +27,60 @@ public abstract class DrawCommand {
     public string Feature { get; }
     public GeoObj Obj { get; }
 
+    public RenderingProperties RenderingProperties { get; }
+
     public Bounds Bounds => Obj.Bounds;
 
-    public double MinZoom => Properties.ContainsKey("min-zoom") ? Properties["min-zoom"].ParseInvariantDouble() : 0;
-    public double MaxZoom => Properties.ContainsKey("max-zoom") ? Properties["max-zoom"].ParseInvariantDouble() : 100;
+    public double MinZoom => RenderingProperties.MinZoom;
+    public double MaxZoom => RenderingProperties.MaxZoom;
 
     public DrawCommand(IDictionary<string, string> properties, int importance, string feature, GeoObj obj) {
         Properties = new Dictionary<string, string>();
         properties.ToList().ForEach(p => Properties[p.Key] = p.Value);
+        RenderingProperties = RenderingProperties.FromDictionary(properties);
         Importance = importance;
         Feature = feature;
         Obj = obj;
     }
 
-    protected void StrokePath(GraphicsPath path, PageRenderer renderer, string prefix, double baseWidth=0) {
-        var lineStyle = GetString($"{prefix}-style");
-        var lineJoinStyle = GetString($"line-join");
-        var lineCapStyle = GetString($"{prefix}-end-cap");
+    protected void StrokePath(GraphicsPath path, PageRenderer renderer, bool border) {
+        var lineStyle = border ? RenderingProperties.BorderStyle : RenderingProperties.LineStyle;
+        var lineJoinStyle = RenderingProperties.LineJoin;
+        var lineCapStyle = border ? RenderingProperties.BorderEndCap : RenderingProperties.LineEndCap;
 
         LineDash? dash = null;
-        if (lineStyle == "none") {
+        if (lineStyle == RenderingProperties.LineStyles.None) {
             return;
-        } else if (lineStyle == "dash") {
+        } else if (lineStyle == RenderingProperties.LineStyles.Dash) {
             dash = new(2, 2, 0);
-        } else if (lineStyle == "dashlong") {
+        } else if (lineStyle == RenderingProperties.LineStyles.Dashlong) {
             dash = new(4, 4, 0);
-        } else if (lineStyle == "dot") {
+        } else if (lineStyle == RenderingProperties.LineStyles.Dot) {
             dash = new(2, 5, 0);
-        } else if (lineStyle == "solid") {
+        } else if (lineStyle == RenderingProperties.LineStyles.Solid) {
             dash = null;
         }
 
         LineCaps caps = LineCaps.Butt;
-        if (lineCapStyle == "round") {
+        if (lineCapStyle == RenderingProperties.LineCaps.Round) {
             caps = LineCaps.Round;
         }
 
         LineJoins joins = LineJoins.Miter;
-        if (lineJoinStyle == "round") {
+        if (lineJoinStyle == RenderingProperties.LineJoins.Round) {
             joins = LineJoins.Round;
         }
 
+        var colour = border ? RenderingProperties.GetBorderColorFor(renderer.Renderer.ZoomLevel) : RenderingProperties.GetLineColorFor(renderer.Renderer.ZoomLevel);
+
         renderer.Graphics.StrokePath(
             path,
-            GetColour($"{prefix}-color", opacityProperty: $"{prefix}-opacity"),
-            prefix == "border" ? baseWidth + 2*GetNum($"border-width", renderer.Renderer.ZoomLevel, baseWidth) : GetNum($"{prefix}-width", renderer.Renderer.ZoomLevel, baseWidth),
+            colour,
+            border ? RenderingProperties.LineWidth.GetFor(renderer.Renderer.ZoomLevel) + 2*RenderingProperties.BorderWidth.GetFor(renderer.Renderer.ZoomLevel) : RenderingProperties.LineWidth.GetFor(renderer.Renderer.ZoomLevel),
             lineDash: dash,
             lineCap: caps,
             lineJoin: joins
         );
-    }
-
-    protected string GetString(string property) {
-        if (Properties.ContainsKey(property)) {
-            return Properties[property];
-        } else {
-            return "";
-        }
-    }
-
-    protected Colour GetColour(string property, string opacityProperty, Colour? defaultColour = null) {
-        Colour colour;
-        if (Properties.ContainsKey(property)) {
-            var val = Properties[property];
-            var parts = val.Split(' ');
-            if (parts.Length == 3) {
-                var colour1 = Colour.FromCSSString(parts[0]) ?? defaultColour ?? Colour.FromRgb(0, 0, 0);
-                var colour2 = Colour.FromCSSString(parts[1]) ?? defaultColour ?? Colour.FromRgb(0, 0, 0);
-                var ratio = ParseDouble(parts[2], 1f);
-                colour = Colour.FromRgba(
-                    colour1.R * (1-ratio) + colour2.R * ratio,
-                    colour1.G * (1-ratio) + colour2.G * ratio,
-                    colour1.B * (1-ratio) + colour2.B * ratio,
-                    colour1.A * (1-ratio) + colour2.A * ratio
-                );
-            } else {
-                colour = Colour.FromCSSString(val) ?? defaultColour ?? Colour.FromRgb(0, 0, 0);
-            }
-        } else {
-            colour =  defaultColour ?? Colour.FromRgb(0, 0, 0);
-        }
-        return opacityProperty is null ? colour : colour.WithAlpha(GetNum(opacityProperty, 0, 1, 1));
     }
 
     protected bool TryGetCoordinates(out double lat, out double lon) {
@@ -158,38 +131,6 @@ public abstract class DrawCommand {
             lon = 0;
             angle = 0;
             return false;
-        }
-    }
-
-    protected double GetNum(string property, int zoomLevel, double baseVal = 0, double defaultValue = 0) {
-        if (Properties.ContainsKey(property)) {
-            var val = Properties[property];
-            if (val.Contains(':')) {
-                double ans = 0;
-                foreach (var pair in val.Split(';')) {
-                    double level = pair.Substring(0, pair.IndexOf(':')).ParseInvariantDouble();
-                    double value = ParseDouble(pair.Substring(pair.IndexOf(':')+1), baseVal);
-                    if (zoomLevel >= level) {
-                        ans = value;
-                    }
-                }
-                return ans;
-            } else {
-                return ParseDouble(val, baseVal);
-            }
-        } else {
-            return defaultValue;
-        }
-    }
-
-    protected static double ParseDouble(string val, double baseVal) {
-        if (val.EndsWith("%")) {
-            val = val.Substring(0, val.Length - 1).Trim();
-            double value = val.ParseInvariantDouble();
-            return value / 100 * baseVal;
-        } else {
-            double value = val.ParseInvariantDouble();
-            return value;
         }
     }
 

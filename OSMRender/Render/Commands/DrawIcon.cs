@@ -31,9 +31,9 @@ public class DrawIcon(IDictionary<string, string> properties, int importance, st
 
         var x = renderer.LongitudeToX(lon);
         var y = renderer.LatitudeToY(lat);
-        var size = Properties.ContainsKey("icon-width") ? GetNum("icon-width", renderer.Renderer.ZoomLevel, 1) : 10;
+        var size = Properties.ContainsKey("icon-width") ? RenderingProperties.IconWidth.GetFor(renderer.Renderer.ZoomLevel) : 10;
 
-        var image = GetImage(GetString("icon-image"));
+        var image = GetImage(RenderingProperties.IconImage);
         if (image is null) {
             renderer.Logger.Error($"{Feature}: Icon `{Properties["icon-image"]}' does not exist");
             return;

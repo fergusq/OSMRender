@@ -78,27 +78,20 @@ public class Renderer {
     /// <param name="doc">the GeoDocument to be renderer that contains the draw commands</param>
     /// <param name="tiled">true if multiple tiles are being renderer, false if only a single image is rendered containing all tiles</param>
     /// <returns>a dictionary from (tileX, tileY) to rendered tiles; if tiled is false, contains only a single rendered image</returns>
-    public Dictionary<(int, int), Page> Render(GeoDocument doc, bool tiled = true)
-    {
+    public Dictionary<(int, int), Page> Render(GeoDocument doc, bool tiled = true) {
         Logger.Debug($"Drawing tiles {MinTileX}..{MaxTileX} / {MinTileY}..{MaxTileY}");
         Dictionary<int, List<DrawCommand>> layers = GetLayers(doc);
         Dictionary<(int, int), Page> pages = [];
-        if (tiled)
-        {
-            for (int x = MinTileX; x <= MaxTileX; x++)
-            {
-                for (int y = MinTileY; y <= MaxTileY; y++)
-                {
+        if (tiled) {
+            for (int x = MinTileX; x <= MaxTileX; x++) {
+                for (int y = MinTileY; y <= MaxTileY; y++) {
                     RenderPage(layers, x, y, out Page page, out bool empty);
-                    if (!empty)
-                    {
+                    if (!empty) {
                         pages[(x, y)] = page;
                     }
                 }
             }
-        }
-        else
-        {
+        } else {
             int tileWidth = MaxTileX - MinTileX + 1;
             int tileHeight = MaxTileY - MinTileY + 1;
             var page = new Page(256 * tileWidth, 256 * tileHeight);
@@ -109,6 +102,7 @@ public class Renderer {
             Logger.Debug("Bounds: " + pageRenderer.TileBounds.ToString());
             foreach (var layer in layers.Keys.OrderBy(key => key))
             {
+                Logger.Debug($"Drawing layer {layer}...");
                 foreach (var cmd in layers[layer].AsEnumerable().Reverse())
                 {
                     //if (cmd.Bounds.Overlaps(bounds)) {
@@ -134,20 +128,15 @@ public class Renderer {
         return page;
     }
 
-    private Dictionary<int, List<DrawCommand>> GetLayers(GeoDocument doc)
-    {
+    private Dictionary<int, List<DrawCommand>> GetLayers(GeoDocument doc) {
         Dictionary<int, List<DrawCommand>> layers = [];
-        foreach (var cmd in doc.DrawCommands)
-        {
+        foreach (var cmd in doc.DrawCommands) {
             try {
-                if (ZoomLevel < cmd.MinZoom || ZoomLevel > cmd.MaxZoom)
-                {
+                if (ZoomLevel < cmd.MinZoom || ZoomLevel > cmd.MaxZoom) {
                     continue;
                 }
-                foreach (var layer in cmd.GetLayers())
-                {
-                    if (!layers.ContainsKey(layer))
-                    {
+                foreach (var layer in cmd.GetLayers()) {
+                    if (!layers.ContainsKey(layer)) {
                         layers[layer] = [];
                     }
 
@@ -157,29 +146,24 @@ public class Renderer {
                 Logger.Error("Error while determining layers of draw command: " + e.ToString());
             }
         }
-        foreach (var layer in layers)
-        {
+        foreach (var layer in layers) {
             layer.Value.Sort((a, b) => b.Importance - a.Importance);
         }
 
         return layers;
     }
 
-    private void RenderPage(Dictionary<int, List<DrawCommand>> layers, int x, int y, out Page page, out bool empty)
-    {
+    private void RenderPage(Dictionary<int, List<DrawCommand>> layers, int x, int y, out Page page, out bool empty) {
         page = new Page(256, 256);
         var pageRenderer = new PageRenderer(this, page, Logger, x, y);
         var bounds = pageRenderer.TileBounds.Extend(1.1);
         Logger.Debug($"Drawing tile {x}/{y} ({pageRenderer.TileBounds})...");
         empty = true;
-        foreach (var layer in layers.Keys.OrderBy(key => key))
-        {
-            //Console.WriteLine($"Drawing layer {layer}...");
-            foreach (var cmd in layers[layer].AsEnumerable().Reverse())
-            {
+        foreach (var layer in layers.Keys.OrderBy(key => key)) {
+            Console.WriteLine($"Drawing layer {layer}...");
+            foreach (var cmd in layers[layer].AsEnumerable().Reverse()) {
                 try {
-                    if (cmd.Bounds.Overlaps(bounds))
-                    {
+                    if (cmd.Bounds.Overlaps(bounds)) {
                         cmd.Draw(pageRenderer, layer);
                         empty = false;
                     }

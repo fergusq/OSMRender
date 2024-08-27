@@ -50,26 +50,19 @@ public class DrawText : LineDrawCommand {
         //    fontFamily = FontFamily.ResolveFontFamily(family) ?? fontFamily;
         //}
 
-        var fontSize = GetNum("font-size", renderer.Renderer.ZoomLevel, defaultValue: 10);
+        var fontSize = RenderingProperties.FontSize.GetFor(renderer.Renderer.ZoomLevel);
         var font = new Font(fontFamily, fontSize);
+        var textColour = RenderingProperties.GetTextColorFor(renderer.Renderer.ZoomLevel);
 
-        TextAnchors anchor = TextAnchors.Center;
-        if (Properties.TryGetValue("text-align-horizontal", out var align)) {
-            switch (align) {
-            case "center":
-                anchor = TextAnchors.Center;
-                break;
-            case "left":
-                anchor = TextAnchors.Left;
-                break;
-            case "right":
-                anchor = TextAnchors.Right;
-                break;
-            }
-        }
+        TextAnchors anchor = RenderingProperties.TextAlignHorizontal switch {
+            RenderingProperties.Alignments.Near => TextAnchors.Left,
+            RenderingProperties.Alignments.Center => TextAnchors.Center,
+            RenderingProperties.Alignments.Far => TextAnchors.Right,
+            _ => TextAnchors.Center
+        };
 
-        var halo = GetNum("text-halo-width", renderer.Renderer.ZoomLevel, 1f);
-        var haloColour = GetColour("text-halo-color", "text-halo-opacity", defaultColour: Colours.White);
+        var haloColour = RenderingProperties.GetTextHaloColorFor(renderer.Renderer.ZoomLevel);
+        var haloWidth = RenderingProperties.TextHaloWidth.GetFor(renderer.Renderer.ZoomLevel);
         if (Obj is Line && Nodes.Count >= 2) {
             var nodes = Nodes[0].Longitude < Nodes.Last().Longitude ? Nodes : Nodes.AsEnumerable().Reverse();
             GraphicsPath path = new();
@@ -80,24 +73,24 @@ public class DrawText : LineDrawCommand {
             int n = (int) Math.Ceiling(path.MeasureLength() / LINE_TEXT_INTERVAL);
 
             for (int i = 0; i < n; i++) {
-                if (halo > 0) { // TODO halo widths
+                if (haloWidth > 0) { // TODO halo widths
                     renderer.Graphics.StrokeTextOnPath(path, Text, font, haloColour, reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle, lineWidth: 1);
                 }
-                renderer.Graphics.FillTextOnPath(path, Text, font, GetColour("text-color", "text-opacity"), reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle);
+                renderer.Graphics.FillTextOnPath(path, Text, font, textColour, reference: (i+1f) / (n+1f), anchor: anchor, textBaseline: TextBaselines.Middle);
             }
             return;
         } else if (TryGetCoordinates(out double lat, out double lon)) {
             double x = renderer.LongitudeToX(lon), y = renderer.LatitudeToY(lat);
 
-            y += GetNum("text-offset-vertical", renderer.Renderer.ZoomLevel, fontSize);
+            y += RenderingProperties.TextOffsetVertical.GetFor(renderer.Renderer.ZoomLevel);
 
             GraphicsPath path = new();
             path.LineTo(x-1, y);
             path.LineTo(x+1, y);
-            if (halo > 0) { // TODO halo widths
+            if (haloWidth > 0) { // TODO halo widths
                 renderer.Graphics.StrokeTextOnPath(path, Text, font, haloColour, reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle, lineWidth: 1);
             }
-            renderer.Graphics.FillTextOnPath(path, Text, font, GetColour("text-color", "text-opacity"), reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle);
+            renderer.Graphics.FillTextOnPath(path, Text, font, textColour, reference: 0.5, anchor: TextAnchors.Center, textBaseline: TextBaselines.Middle);
         }
     }
 

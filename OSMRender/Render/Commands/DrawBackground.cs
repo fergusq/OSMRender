@@ -33,7 +33,7 @@ public class DrawBackground(IDictionary<string, string> properties, int importan
         path.LineTo(renderer.LongitudeToX(Background.Bounds.MaxLatitude), renderer.LatitudeToY(Background.Bounds.MinLatitude));
         path.Close();
 
-        renderer.Graphics.FillPath(path, GetColour("map-background-color", "map-background-opacity"));
+        renderer.Graphics.FillPath(path, RenderingProperties.GetMapBackgroundColorFor(renderer.Renderer.ZoomLevel));
     }
 
     public override IEnumerable<int> GetLayers() {

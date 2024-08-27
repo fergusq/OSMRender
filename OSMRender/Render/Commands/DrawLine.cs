@@ -33,9 +33,9 @@ public class DrawLine(IDictionary<string, string> properties, int importance, st
         }
 
         if (layer == FillLayer) {
-            StrokePath(path, renderer, "line");
+            StrokePath(path, renderer, border: false);
         } else if (layer == StrokeLayer) {
-            StrokePath(path, renderer, "border", GetNum("line-width", renderer.Renderer.ZoomLevel, 0f));
+            StrokePath(path, renderer, border: true);
         }
     }
 
