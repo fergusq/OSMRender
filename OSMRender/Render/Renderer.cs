@@ -160,7 +160,7 @@ public class Renderer {
         Logger.Debug($"Drawing tile {x}/{y} ({pageRenderer.TileBounds})...");
         empty = true;
         foreach (var layer in layers.Keys.OrderBy(key => key)) {
-            Console.WriteLine($"Drawing layer {layer}...");
+            Logger.Debug($"Drawing layer {layer}...");
             foreach (var cmd in layers[layer].AsEnumerable().Reverse()) {
                 try {
                     if (cmd.Bounds.Overlaps(bounds)) {

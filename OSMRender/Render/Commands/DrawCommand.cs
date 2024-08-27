@@ -52,18 +52,22 @@ public abstract class DrawCommand {
         if (lineStyle == RenderingProperties.LineStyles.None) {
             return;
         } else if (lineStyle == RenderingProperties.LineStyles.Dash) {
-            dash = new(2, 2, 0);
+            dash = new(6, 2, 0);
         } else if (lineStyle == RenderingProperties.LineStyles.Dashlong) {
-            dash = new(4, 4, 0);
+            dash = new(12, 12, 0);
         } else if (lineStyle == RenderingProperties.LineStyles.Dot) {
-            dash = new(2, 5, 0);
+            dash = new(2, 2, 0);
         } else if (lineStyle == RenderingProperties.LineStyles.Solid) {
             dash = null;
         }
 
         LineCaps caps = LineCaps.Butt;
-        if (lineCapStyle == RenderingProperties.LineCaps.Round) {
+        if (lineCapStyle == RenderingProperties.LineCaps.None) {
+            caps = LineCaps.Butt;
+        } else if (lineCapStyle == RenderingProperties.LineCaps.Round) {
             caps = LineCaps.Round;
+        } else if (lineCapStyle == RenderingProperties.LineCaps.Square) {
+            caps = LineCaps.Square;
         }
 
         LineJoins joins = LineJoins.Miter;
@@ -72,11 +76,12 @@ public abstract class DrawCommand {
         }
 
         var colour = border ? RenderingProperties.GetBorderColorFor(renderer.Renderer.ZoomLevel) : RenderingProperties.GetLineColorFor(renderer.Renderer.ZoomLevel);
+        var lineWidth = RenderingProperties.LineWidth.GetFor(renderer.Renderer.ZoomLevel);
 
         renderer.Graphics.StrokePath(
             path,
             colour,
-            border ? RenderingProperties.LineWidth.GetFor(renderer.Renderer.ZoomLevel) + 2*RenderingProperties.BorderWidth.GetFor(renderer.Renderer.ZoomLevel) : RenderingProperties.LineWidth.GetFor(renderer.Renderer.ZoomLevel),
+            border ? lineWidth + 2*RenderingProperties.BorderWidth.GetFor(renderer.Renderer.ZoomLevel) : lineWidth,
             lineDash: dash,
             lineCap: caps,
             lineJoin: joins

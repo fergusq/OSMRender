@@ -200,8 +200,12 @@ public class RenderingProperties {
     }
 
     public enum LineCaps {
+        [EnumValue("none")]
+        None,
         [EnumValue("round")]
         Round,
+        [EnumValue("square")]
+        Square,
     }
 
     public enum Shapes {
@@ -267,13 +271,13 @@ public class RenderingProperties {
         return BorderColor.WithAlpha(BorderOpacity.GetFor(zoomLevel));
     }
 
-    [EnumProperty("border-start-cap", LineCaps.Round, typeof(LineCaps))]
+    [EnumProperty("border-start-cap", LineCaps.None, typeof(LineCaps))]
     public LineCaps BorderStartCap { get; set; }
 
-    [EnumProperty("border-end-cap", LineCaps.Round, typeof(LineCaps))]
+    [EnumProperty("border-end-cap", LineCaps.None, typeof(LineCaps))]
     public LineCaps BorderEndCap { get; set; }
 
-    [EnumProperty("border-style", LineStyles.Solid, typeof(LineStyles))]
+    [EnumProperty("border-style", LineStyles.None, typeof(LineStyles))]
     public LineStyles BorderStyle { get; set; }
 
     [ZoomableValueProperty("border-width", 1.0, nameof(LineWidth))]
@@ -308,10 +312,10 @@ public class RenderingProperties {
         return LineColor.WithAlpha(LineOpacity.GetFor(zoomLevel));
     }
 
-    [EnumProperty("line-start-cap", LineCaps.Round, typeof(LineCaps))]
+    [EnumProperty("line-start-cap", LineCaps.None, typeof(LineCaps))]
     public LineCaps LineStartCap { get; set; }
 
-    [EnumProperty("line-end-cap", LineCaps.Round, typeof(LineCaps))]
+    [EnumProperty("line-end-cap", LineCaps.None, typeof(LineCaps))]
     public LineCaps LineEndCap { get; set; }
 
     [EnumProperty("line-join", LineJoins.Round, typeof(LineJoins))]

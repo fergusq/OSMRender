@@ -643,15 +643,17 @@ rules
 			line-width : 1
 		draw : shape
 	target : bollard
-		//define
-		//	min-zoom : 16
-		//	fill-color : #7D7D7D
-		//	line-style : none
-		//	shape: circle
-		//	shape-size : 16:1;18:2
-		//draw : shape
 		define
 			min-zoom : 16
+			max-zoom : 17
+			fill-color : #7D7D7D
+			line-style : none
+			shape: circle
+			shape-size : 16:1;18:2
+		draw : shape
+		define
+			min-zoom : 18
+			max-zoom : 20
 			icon-image : icons/SJJB/png/barrier_bollard.p.32.png
 			icon-width : 8
 		draw : icon

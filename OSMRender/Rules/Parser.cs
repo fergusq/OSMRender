@@ -807,7 +807,7 @@ public class Parser {
                 if (feature.Obj is Area area) {
                     doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, feature.Name, area));
                 } else {
-                    Logger.Warning($"{feature.Name}: draw:fill is only supported for areas");
+                    Logger.Debug($"{feature.Name}: draw:fill is only supported for areas");
                     throw new StopException();
                 }
                 break;
@@ -817,7 +817,7 @@ public class Parser {
                 } else if (feature.Obj is Area area2) {
                     doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, feature.Name, area2, isLine: true));
                 } else {
-                    Logger.Warning($"{feature.Name}: draw:line is only supported for lines");
+                    Logger.Debug($"{feature.Name}: draw:line is only supported for lines");
                     throw new StopException();
                 }
                 break;
