@@ -30,6 +30,22 @@ public class Area(long id, IDictionary<string, string> tags) : GeoObj(id, tags) 
     public double MeanLatitude => OuterEdges.SelectMany(e => e).Select(p => p.Latitude).Sum() / OuterEdges.SelectMany(e => e).Count();
     public double MeanLongitude => OuterEdges.SelectMany(e => e).Select(p => p.Longitude).Sum() / OuterEdges.SelectMany(e => e).Count();
 
+    public IEnumerable<Point> CalculateEdge() {
+        var edge = new List<Point>();
+        if (OuterEdges.Count > 0) {
+            var dir = IsClockwise(OuterEdges[0]);
+            foreach (var outer in OuterEdges) {
+                edge.AddRange(IsClockwise(outer) == dir ? outer : outer.AsEnumerable().Reverse());
+                edge.Add(OuterEdges[0].First());
+            }
+            foreach (var inner in InnerEdges) {
+                edge.AddRange(IsClockwise(inner) != dir ? inner : inner.AsEnumerable().Reverse());
+                edge.Add(OuterEdges[0].First());
+            }
+        }
+        return edge;
+    }
+
     private static bool IsClockwise(IList<Point> points) {
         var n = points.Count;
         if (points.First().Id == points.Last().Id) {

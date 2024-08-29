@@ -22,6 +22,8 @@ namespace OSMRender.Render.Commands;
 
 public class DrawFill(IDictionary<string, string> properties, int importance, string feature, Area obj, bool isLine = false) : DrawCommand(properties, importance, feature, obj) {
 
+    public static bool AllowMask { get; set; } = true;
+
     private readonly Area Area = obj;
 
     private readonly bool IsLine = isLine;
@@ -44,7 +46,7 @@ public class DrawFill(IDictionary<string, string> properties, int importance, st
             foreach (var edge in Area.OuterEdges) {
                 renderer.Graphics.FillPath(NodesToPath(renderer, edge), RenderingProperties.GetFillColorFor(renderer.Renderer.ZoomLevel));
             }
-        } else {
+        } else if (AllowMask) {
             List<GraphicsPath> paths = [];
             Area.OuterEdges.ForEach(edge => paths.Add(NodesToPath(renderer, edge)));
 
@@ -62,6 +64,10 @@ public class DrawFill(IDictionary<string, string> properties, int importance, st
             }
 
             renderer.Graphics.DrawGraphics(0, 0, output, new MaskFilter(mask));
+        } else {
+            // If masks are disallowed, draw the edge by calculating a new edge that contains the inner edges
+            // This requires no rasterization to export PDF files, but might cause graphical issues
+            StrokePath(NodesToPath(renderer, Area.CalculateEdge()), renderer, border: false);
         }
     }
 
