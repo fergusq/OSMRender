@@ -41,8 +41,6 @@ public class DrawFill(IDictionary<string, string> properties, int importance, st
                 StrokePath(path, renderer, border: false);
             }
         } else if (Area.InnerEdges.Count == 0) {
-            List<GraphicsPath> paths = [];
-            Area.OuterEdges.ForEach(edge => paths.Add(NodesToPath(renderer, edge)));
             foreach (var edge in Area.OuterEdges) {
                 renderer.Graphics.FillPath(NodesToPath(renderer, edge), RenderingProperties.GetFillColorFor(renderer.Renderer.ZoomLevel));
             }
@@ -67,7 +65,7 @@ public class DrawFill(IDictionary<string, string> properties, int importance, st
         } else {
             // If masks are disallowed, draw the edge by calculating a new edge that contains the inner edges
             // This requires no rasterization to export PDF files, but might cause graphical issues
-            StrokePath(NodesToPath(renderer, Area.CalculateEdge()), renderer, border: false);
+            renderer.Graphics.FillPath(NodesToPath(renderer, Area.CalculateEdge()), RenderingProperties.GetFillColorFor(renderer.Renderer.ZoomLevel));
         }
     }
 

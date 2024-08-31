@@ -321,6 +321,16 @@ public class Parser {
             var num = int.Parse(Eat(tokens));
             Eat(tokens, ")");
             return new IsMultiQuery(key, num);
+        } else if (TryEat(tokens, "@isTrue")) {
+            Eat(tokens, "(");
+            var key = Eat(tokens);
+            Eat(tokens, ")");
+            return new IsBoolQuery(key, true);
+        } else if (TryEat(tokens, "@isFalse")) {
+            Eat(tokens, "(");
+            var key = Eat(tokens);
+            Eat(tokens, ")");
+            return new IsBoolQuery(key, false);
         } else if (TryEat(tokens, "node")) {
             Ruleset.IQuery? subquery = null;
             if (TryEat(tokens, "[")) {
@@ -458,6 +468,27 @@ public class Parser {
         public readonly bool Matches(GeoDocument doc, GeoObj obj)
         {
             return obj.Tags is not null && obj.Tags.ContainsKey(Key) && obj.Tags[Key].ParseInvariantDouble() % Num == 0;
+        }
+    }
+
+    /// <summary>
+    /// Represents an @isTrue or @isFalse query.
+    /// </summary>
+    private readonly struct IsBoolQuery(string key, bool val) : Ruleset.IQuery {
+
+        private readonly string Key = key;
+        private readonly bool Val = val;
+
+        private static readonly HashSet<string> TruthyValues = ["yes", "1", "true"];
+        private static readonly HashSet<string> FalsyValues = ["no", "0", "false"];
+
+        public readonly bool Matches(GeoDocument doc, GeoObj obj)
+        {
+            if (obj.Tags is not null && obj.Tags.ContainsKey(Key)) {
+                return (Val ? TruthyValues : FalsyValues).Contains(obj.Tags[Key]);
+            } else {
+                return !Val;
+            }
         }
     }
 
@@ -805,7 +836,7 @@ public class Parser {
             switch (Type) {
             case "fill":
                 if (feature.Obj is Area area) {
-                    doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, feature.Name, area));
+                    doc.DrawCommands.Add(new DrawFill(state.Properties, Importance, feature.Name, area, isLine: false));
                 } else {
                     Logger.Debug($"{feature.Name}: draw:fill is only supported for areas");
                     throw new StopException();
